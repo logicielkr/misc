@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<article xml:lang="ko" xmlns:xi="http://www.w3.org/2001/XInclude" version="5.0">
+
+<info>
+	<title>DocBook Publishing</title>
+	<subtitle>(PDF Publishing)</subtitle>
+	<authorgroup>
+		<author>
+			<personname>DocBook Author Name</personname>
+			<email>AuthorEmail@</email>
+		</author>
+	</authorgroup>
+	<pubdate>2019-10-30</pubdate>
+</info>
+
+<section id="s.intro">
+	<title>Title</title>
+	<para>
+		Introduction
+	</para>
+</section>
+</article>

@@ -1,0 +1,69 @@
+<?xml version="1.0"?>
+<project name="docbook" default="html">
+	<property name="file.name" value="docbook" />
+	<property name="src.dir" value="src" />
+	<property name="html.dir" value="html" />
+	<property name="fo.dir" value="fo" />
+	<property name="pdf.dir" value="pdf" />
+	
+	<property name="docbook.xsl.dir" value="lib/docbook-xsl-1.79.1" />
+	<property name="html.stylesheet" value="${docbook.xsl.dir}/html/docbook.xsl" />
+	<property name="fo.stylesheet" value="${docbook.xsl.dir}/fo/docbook.xsl" />
+	
+	<property name="xalan.lib.dir" value="lib/xalan-j_2_7_2" />
+	<path id="xalan.classpath">
+		<fileset dir="${xalan.lib.dir}" id="xalan.fileset">
+			<include name="xalan.jar" />
+			<include name="xercesImpl.jar" />
+		</fileset>
+	</path>
+	
+	<property name="fop.home" value="lib/fop-2.3/fop" />
+	<path id="fop.classpath">
+		<fileset dir="${fop.home}/lib">
+			<include name="*.jar" />
+		</fileset>
+		<fileset dir="${fop.home}/build">
+			<include name="fop.jar" />
+			<include name="fop-hyph.jar" />
+		</fileset>
+	</path>
+	
+	<taskdef name="fop" classname="org.apache.fop.tools.anttasks.Fop">
+		<classpath refid="fop.classpath" />
+	</taskdef>
+	
+	<target name="clean">
+		<delete dir="${html.dir}" />
+		<delete dir="${fo.dir}" />
+		<delete dir="${pdf.dir}" />
+	</target>
+	
+	<target name="depends">
+		<mkdir dir="${html.dir}" />
+		<mkdir dir="${fo.dir}" />
+		<mkdir dir="${pdf.dir}" />
+	</target>
+	
+	<target name="html" depends="depends">
+		<xslt style="${html.stylesheet}" extension=".html" 
+			basedir="${src.dir}" destdir="${html.dir}"
+		>
+			<classpath refid="xalan.classpath" />
+			<outputproperty name="encoding" value="utf-8"/>
+		</xslt>
+	</target>
+	
+	<target name="pdf" depends="depends">
+		<xslt style="${fo.stylesheet}" extension=".fo" 
+			basedir="${src.dir}" destdir="${fo.dir}"
+		>
+			<classpath refid="xalan.classpath" />
+			<include name="${file.name}.xml" />
+			<param name="paper.type" expression="A4" />
+		</xslt>
+		<fop format="application/pdf" fofile="${fo.dir}/${file.name}.fo" 
+			outfile="${pdf.dir}/${file.name}.pdf" userconfig="${fop.home}/conf/fop.xconf"
+		/>
+	</target>
+</project>

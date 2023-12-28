@@ -1,0 +1,57 @@
+<fonts>
+<!--
+	<auto-detect/>
+-->
+	<font kerning="yes" 
+		embed-url="/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+	>
+		<font-triplet name="Helvetica" style="normal" weight="normal"/>
+		<font-triplet name="sans-serif" style="normal" weight="normal"/>
+		<font-triplet name="SansSerif" style="normal" weight="normal"/>
+	</font>
+
+	<font kerning="yes" 
+		embed-url="/usr/share/fonts/truetype/nanum/NanumGothicBold.ttf"
+	>
+		<font-triplet name="Helvetica" style="normal" weight="bold"/>
+		<font-triplet name="sans-serif" style="normal" weight="bold"/>
+		<font-triplet name="SansSerif" style="normal" weight="bold"/>
+	</font>
+
+	<font kerning="yes" 
+		embed-url="/usr/share/fonts/truetype/nanum/NanumMyeongjo.ttf"
+	>
+		<font-triplet name="Times" style="normal" weight="normal"/>
+		<font-triplet name="Times Roman" style="normal" weight="normal"/>
+		<font-triplet name="Times-Roman" style="normal" weight="normal"/>
+		<font-triplet name="serif" style="normal" weight="normal"/>
+		<font-triplet name="any" style="normal" weight="normal"/>
+	</font>
+
+	<font kerning="yes" 
+		embed-url="/usr/share/fonts/truetype/nanum/NanumMyeongjoBold.ttf"
+	>
+		<font-triplet name="Times" style="normal" weight="bold"/>
+		<font-triplet name="Times Roman" style="normal" weight="bold"/>
+		<font-triplet name="Times-Roman" style="normal" weight="bold"/>
+		<font-triplet name="serif" style="normal" weight="bold"/>
+		<font-triplet name="any" style="normal" weight="bold"/>
+	</font>
+
+	<font kerning="yes" 
+		embed-url="/usr/share/fonts/truetype/nanum/NanumGothic_Coding.ttf"
+	>
+		<font-triplet name="Courier Courier" style="normal" weight="normal"/>
+		<font-triplet name="monospace" style="normal" weight="normal"/>
+		<font-triplet name="Monospaced" style="normal" weight="normal"/>
+	</font>
+
+	<font kerning="yes" 
+		embed-url="/usr/share/fonts/truetype/nanum/NanumGothic_Coding_Bold.ttf"
+	>
+		<font-triplet name="Courier Courier" style="normal" weight="bold"/>
+		<font-triplet name="monospace" style="normal" weight="bold"/>
+		<font-triplet name="Monospaced" style="normal" weight="bold"/>
+	</font>
+
+</fonts>

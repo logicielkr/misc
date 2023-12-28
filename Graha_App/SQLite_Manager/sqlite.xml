@@ -1,0 +1,316 @@
+<querys>
+<!--
+sqlite-jdbc-3.8.10.1.jar 호환성을 위해서 변경함.
+
+테스트 : sqlite-jdbc-3.30.1.jar, sqlite-jdbc-3.8.10.1.jar
+select sqlite_version()
+-->
+	<header extends="_base.xml">
+<!--
+		<jdbc
+			driverClassName="org.sqlite.JDBC"
+			protectedUrl="jdbc:sqlite:${param.file}"
+			username=""
+			password=""
+		/>
+-->
+		<jdbc
+			driverClassName="kr.xdbc.driver.GenericDriver"
+			protectedUrl="xdbc:jdbc:sqlite:${param.file}"
+			username=""
+			password=""
+		/>
+	</header>
+	<query id="table_list" funcType="listAll" label="테이블 목록(SQLite)" allowblank="true">
+		<header>
+			<style>
+table#table_list th.data,
+table#table_list td.data,
+table#table_list th.index_list,
+table#table_list td.index_list
+{
+	width:180px;
+	text-align:center;
+}
+			</style>
+		</header>
+		<commands>
+			<command name="table_list">
+				<sql>
+SELECT
+	tbl_name
+	, '인덱스' as index_list
+	, '컬럼' as table_info
+	, '데이타' as data
+FROM sqlite_master
+where type = 'table'
+and tbl_name not in ('sqlite_sequence', 'GRAHA_COL_COMMENTS', 'GRAHA_TAB_COMMENTS')
+order by name
+				</sql>
+			</command>
+		</commands>
+		<layout>
+			<middle>
+				<tab name="table_list" label="테이블 목록">
+					<column label="테이블이름" name="tbl_name">
+						<link path="table_info">
+							<param name="tbl_name" type="query" value="tbl_name" />
+							<param name="file" type="param" value="file" />
+						</link>
+					</column>
+					<column label="인덱스" name="index_list">
+						<link path="index_list">
+							<param name="tbl_name" type="query" value="tbl_name" />
+							<param name="file" type="param" value="file" />
+						</link>
+					</column>
+					<column label="데이타" name="data">
+						<link path="data">
+							<param name="tbl_name" type="query" value="tbl_name" />
+							<param name="file" type="param" value="file" />
+						</link>
+					</column>
+				</tab>
+			</middle>
+		</layout>
+	</query>
+	<query 
+		id="table_info" 
+		funcType="listAll" 
+		label="테이블정보(${/document/params/tbl_name})"
+		xLabel="테이블정보(${/RDF:RDF/RDF:Description[@uc:for='urn:root:params']/uc:params/uc:tbl_name})"
+		allowblank="true"
+	>
+		<header>
+			<style>
+table#table_info th.allow_null,
+table#table_info td.allow_null,
+table#table_info th.is_pk,
+table#table_info td.is_pk,
+table#table_info th.notnull,
+table#table_info td.notnull,
+table#table_info th.pk,
+table#table_info td.pk
+{
+	width:180px;
+	text-align:center;
+}
+table#table_info th.type,
+table#table_info td.type {
+	width:180px;
+}
+			</style>
+		</header>
+		<commands>
+			<command name="table_info">
+				<sql>
+<entity>PRAGMA table_info('${param.tbl_name}')</entity>
+/*
+select 
+	name, 
+	type, 
+	case when "notnull" = 1 then 'NO' else 'YES' end as allow_null,
+	case when pk > 0 then 'true' else 'false' end as is_pk
+from pragma_table_info(?)
+order by cid
+*/
+				</sql>
+<!--
+				<params>
+					<param name="tbl_name" datatype="varchar" value="param.tbl_name" />
+				</params>
+-->
+			</command>
+		</commands>
+		<layout>
+			<top>
+				<left>
+					<link name="table_list" label="Tables" path="table_list">
+						<params>
+							<param name="file" type="param" value="file" />
+						</params>
+					</link>
+				</left>
+			</top>
+			<middle>
+				<tab name="table_info" label="테이블정보">
+					<column label="컬럼이름" name="name" />
+					<column label="데이타 유형" name="type" />
+					<column label="NULL 허용" name="notnull" code="true">
+						<option value="1" label="NO" />
+						<option value="0" label="YES" />
+					</column>
+					<column label="기본키" name="pk" code="true">
+						<option value="0" label="false" />
+						<option value="1" label="true" />
+						<option value="2" label="true" />
+						<option value="3" label="true" />
+						<option value="4" label="true" />
+						<option value="5" label="true" />
+						<option value="6" label="true" />
+						<option value="7" label="true" />
+						<option value="8" label="true" />
+						<option value="9" label="true" />
+						<option value="10" label="true" />
+					</column>
+<!--
+					<column label="NULL 허용" name="allow_null" />
+					<column label="기본키" name="is_pk" />
+-->
+				</tab>
+			</middle>
+		</layout>
+	</query>
+	<query 
+		id="data" 
+		funcType="list" 
+		label="테이블 데이타(${/document/params/tbl_name})" 
+		xLabel="테이블 데이타(${/RDF:RDF/RDF:Description[@uc:for='urn:root:params']/uc:params/uc:tbl_name})"
+	>
+		<header />
+		<commands>
+			<command name="table_data">
+				<sql pageSize="10" pageGroupSize="10">
+select * from
+<entity>${param.tbl_name}</entity>
+				</sql>
+				<sql_cnt>
+select count(*) from
+<entity>${param.tbl_name}</entity>
+				</sql_cnt>
+			</command>
+		</commands>
+		<layout>
+			<top>
+				<left>
+					<link name="table_list" label="Tables" path="table_list">
+						<params>
+							<param name="file" type="param" value="file" />
+						</params>
+					</link>
+				</left>
+				<center>page</center>
+			</top>
+			<middle>
+				<tab name="table_data" label="테이블 데이타" column="auto" />
+			</middle>
+			<bottom>
+				<center>page</center>
+			</bottom>
+		</layout>
+	</query>
+	<query 
+		id="index_list" 
+		funcType="listAll" 
+		label="인덱스 목록(${/document/params/tbl_name})"
+		xLabel="인덱스 목록(${/RDF:RDF/RDF:Description[@uc:for='urn:root:params']/uc:params/uc:tbl_name})"
+		allowblank="true"
+	>
+		<header>
+			<style>
+table#index_list th.unique,
+table#index_list td.unique,
+table#index_list th.origin,
+table#index_list td.origin
+{
+	width:180px;
+	text-align:center;
+}
+			</style>
+		</header>
+		<commands>
+			<command name="index_list">
+				<sql>
+<entity>PRAGMA index_list('${param.tbl_name}')</entity>
+/*
+select
+	name, "unique", origin
+	, (select GROUP_CONCAT(name, ', ') from pragma_index_info(x.name)) as columns
+from pragma_index_list(?) as x
+order by seq
+*/
+				</sql>
+<!--
+				<params>
+					<param name="tbl_name" datatype="varchar" value="param.tbl_name" />
+				</params>
+-->
+			</command>
+		</commands>
+		<layout>
+			<top>
+				<left>
+					<link name="table_list" label="Tables" path="table_list">
+						<params>
+							<param name="file" type="param" value="file" />
+						</params>
+					</link>
+				</left>
+			</top>
+			<middle>
+				<tab name="index_list" label="인덱스 목록">
+<!--
+					<column label="인덱스 이름" name="name" />
+					<column label="Columns" name="columns" />
+-->
+					<column label="인덱스 이름" name="name">
+						<link path="index_info">
+							<param name="tbl_name" type="param" value="tbl_name" />
+							<param name="idx_name" type="query" value="name" />
+							<param name="file" type="param" value="file" />
+						</link>
+					</column>
+					<column label="Unique" name="unique" />
+					<column label="Origin" name="origin" />
+				</tab>
+			</middle>
+		</layout>
+	</query>
+	<query 
+		id="index_info" 
+		funcType="listAll" 
+		label="인덱스 정보(${/document/params/tbl_name}) / (${/document/params/idx_name})"
+		xLabel="인덱스 정보(${/RDF:RDF/RDF:Description[@uc:for='urn:root:params']/uc:params/uc:tbl_name}) / (${/RDF:RDF/RDF:Description[@uc:for='urn:root:params']/uc:params/uc:idx_name})"
+		allowblank="true"
+	>
+		<header />
+		<commands>
+			<command name="index_info">
+				<sql>
+<entity>PRAGMA index_info('${param.idx_name}')</entity>
+/*
+select * from pragma_index_info(?)
+*/
+				</sql>
+<!--
+				<params>
+					<param name="idx_name" datatype="varchar" value="param.idx_name" />
+				</params>
+-->
+			</command>
+		</commands>
+		<layout>
+			<top>
+				<left>
+					<link name="index_list" label="Indexes" path="index_list">
+						<params>
+							<param name="tbl_name" type="param" value="tbl_name" />
+							<param name="file" type="param" value="file" />
+						</params>
+					</link>
+					<link name="table_list" label="Tables" path="table_list">
+						<params>
+							<param name="file" type="param" value="file" />
+						</params>
+					</link>
+				</left>
+			</top>
+			<middle>
+				<tab name="index_info" label="인덱스 정보">
+					<column label="순번" name="seqno" />
+					<column label="컬럼이름" name="name" />
+				</tab>
+			</middle>
+		</layout>
+	</query>
+</querys>

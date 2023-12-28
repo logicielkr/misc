@@ -1,0 +1,871 @@
+<querys>
+	<header extends="_base.xml">
+		<prop name="legacy" public="true">
+			<sql>
+select 
+	a.*
+	, current_user || '.' || is_legacy as current_user_is_legacy
+	, combination_privilege || '.' || is_legacy as combination_privilege_and_is_legacy
+	, tablespace_privilege || '.' || is_legacy as tablespace_privilege_and_is_legacy
+	, database_privilege || '.' || is_legacy as database_privilege_and_is_legacy
+	, table_privilege || '.' || is_legacy as table_privilege_and_is_legacy
+	, activity_privilege || '.' || is_legacy as activity_privilege_and_is_legacy
+	, pg_stat_privilege || '.' || is_legacy as pg_stat_privilege_and_is_legacy
+	, pg_catalog_privilege || '.' || is_legacy as pg_catalog_privilege_and_is_legacy
+from (
+	select
+		CURRENT_SETTING('server_version_num') AS version
+		, case when CURRENT_SETTING('server_version_num')::integer >= 90200 then 'modern' else 'legacy' end as is_legacy
+		, CURRENT_USER
+		, case 
+			when 
+				has_table_privilege(current_user, 'pg_catalog.pg_locks', 'select') = true 
+				and has_table_privilege(current_user, 'pg_catalog.pg_stat_activity', 'select') = true 
+			then 'true' 
+			else 'false' 
+		end as combination_privilege
+		, case 
+			when 
+				has_table_privilege(current_user, 'pg_catalog.pg_tablespace', 'select') = true
+			then 'true' 
+			else 'false' 
+		end as tablespace_privilege
+		, case 
+			when 
+				has_table_privilege(current_user, 'pg_catalog.pg_tablespace', 'select') = true 
+				and has_table_privilege(current_user, 'pg_catalog.pg_database', 'select') = true 
+			then 'true' 
+			else 'false' 
+		end as database_privilege
+		, case 
+			when 
+				has_table_privilege(current_user, 'pg_catalog.pg_tables', 'select') = true
+			then 'true' 
+			else 'false' 
+		end as table_privilege
+		, case 
+			when 
+				has_table_privilege(current_user, 'pg_catalog.pg_stat_activity', 'select') = true
+			then 'true' 
+			else 'false' 
+		end as activity_privilege
+		, case 
+			when 
+				has_table_privilege(current_user, 'pg_catalog.pg_views', 'select') = true
+			then 'true' 
+			else 'false' 
+		end as pg_stat_privilege
+		, case 
+			when 
+				has_table_privilege(current_user, 'pg_catalog.pg_views', 'select') = true 
+				and has_table_privilege(current_user, 'pg_catalog.pg_tables', 'select') = true 
+			then 'true' 
+			else 'false' 
+		end as pg_catalog_privilege
+) as a
+			</sql>
+		</prop>
+	</header>
+	<query id="index" funcType="list" label="PostgreSQL Utility">
+		<header>
+			<style>
+div.box ul {
+	margin-left:0px;
+	padding-left:20px;
+}
+div.box {
+	border: 1px solid #aaa;
+	border-radius: 10px;
+	padding-right:10px;
+	padding-left:10px;
+	display:inline-block;
+	margin:5px;
+	width: calc(33% - 33px);
+	vertical-align:top;
+}
+@media only screen and (max-width: 600px) {
+	div.box {
+		border: 1px solid #aaa;
+		border-radius: 10px;
+		padding-right:10px;
+		padding-left:10px;
+		display:inline-block;
+		margin:5px;
+		width: calc(100% - 35px);
+	}
+}
+a {
+	color:#000000;
+	text-decoration:none;
+}
+			</style>
+		</header>
+		<layout  template="native"><![CDATA[
+<xsl:if test="document/props/legacy.tablespace_privilege = 'true'">
+	<div class="box">
+		<h3><a href="table.html">테이블 현황</a></h3>
+		<ul>
+			<li>테이블 현황을 조회한다.</li>
+		</ul>
+	</div>
+</xsl:if>
+<xsl:if test="document/props/legacy.database_privilege = 'true'">
+	<div class="box">
+		<h3><a href="database.html">데이타베이스 현황</a></h3>
+		<ul>
+			<li>데이타베이스 현황을 조회한다.</li>
+		</ul>
+	</div>
+</xsl:if>
+<xsl:if test="document/props/legacy.tablespace_privilege = 'true'">
+	<div class="box">
+		<h3><a href="tablespace.html">테이블스페이스 현황</a></h3>
+		<ul>
+			<li>테이블스페이스 현황을 조회한다.</li>
+		</ul>
+	</div>
+</xsl:if>
+<xsl:if test="document/props/legacy.activity_privilege = 'true'">
+	<div class="box">
+		<h3><a href="activity.html">연결 현황</a></h3>
+		<ul>
+			<li>연결 현황을 조회한다.</li>
+		</ul>
+	</div>
+</xsl:if>
+<xsl:if test="document/props/legacy.combination_privilege = 'true'">
+	<div class="box">
+		<h3><a href="combination.html">Сombination of blocked and blocking activity</a></h3>
+		<ul>
+			<li>Lock 으로 대기하고 있는 sql 현황을 조회한다.</li>
+		</ul>
+	</div>
+</xsl:if>
+<xsl:if test="document/props/legacy.pg_stat_privilege = 'true'">
+	<div class="box">
+		<h3><a href="pg_stat.html">pg_stat 로 시작하는 View</a></h3>
+		<ul>
+			<li>pg_stat 로 시작하는 View를 조회한다.</li>
+		</ul>
+	</div>
+</xsl:if>
+<xsl:if test="document/props/legacy.pg_catalog_privilege = 'true'">
+	<div class="box">
+		<h3><a href="pg_catalog.html">pg_catalog</a></h3>
+		<ul>
+			<li>pg_catalog 및 information_schema 을 조회한다.</li>
+		</ul>
+	</div>
+</xsl:if>
+		]]></layout>
+	</query>
+	<query id="index_using_rdf" funcType="list" label="PostgreSQL Utility" output="rdf">
+		<header>
+			<style>
+div.box ul {
+	margin-left:0px;
+	padding-left:20px;
+}
+div.box {
+	border: 1px solid #aaa;
+	border-radius: 10px;
+	padding-right:10px;
+	padding-left:10px;
+	display:inline-block;
+	margin:5px;
+	width: calc(33% - 33px);
+	vertical-align:top;
+}
+@media only screen and (max-width: 600px) {
+	div.box {
+		border: 1px solid #aaa;
+		border-radius: 10px;
+		padding-right:10px;
+		padding-left:10px;
+		display:inline-block;
+		margin:5px;
+		width: calc(100% - 35px);
+	}
+}
+a {
+	color:#000000;
+	text-decoration:none;
+}
+			</style>
+		</header>
+		<layout  template="native"><![CDATA[
+<xsl:if test="RDF:RDF/RDF:Description[@uc:for='urn:root:props']/uc:props/uc:legacy.tablespace_privilege = 'true'">
+	<div class="box">
+		<h3><a href="table.html">테이블 현황</a></h3>
+		<ul>
+			<li>테이블 현황을 조회한다.</li>
+		</ul>
+	</div>
+</xsl:if>
+<xsl:if test="RDF:RDF/RDF:Description[@uc:for='urn:root:props']/uc:props/uc:legacy.database_privilege = 'true'">
+	<div class="box">
+		<h3><a href="database.html">데이타베이스 현황</a></h3>
+		<ul>
+			<li>데이타베이스 현황을 조회한다.</li>
+		</ul>
+	</div>
+</xsl:if>
+<xsl:if test="RDF:RDF/RDF:Description[@uc:for='urn:root:props']/uc:props/uc:legacy.tablespace_privilege = 'true'">
+	<div class="box">
+		<h3><a href="tablespace.html">테이블스페이스 현황</a></h3>
+		<ul>
+			<li>테이블스페이스 현황을 조회한다.</li>
+		</ul>
+	</div>
+</xsl:if>
+<xsl:if test="RDF:RDF/RDF:Description[@uc:for='urn:root:props']/uc:props/uc:legacy.activity_privilege = 'true'">
+	<div class="box">
+		<h3><a href="activity.html">연결 현황</a></h3>
+		<ul>
+			<li>연결 현황을 조회한다.</li>
+		</ul>
+	</div>
+</xsl:if>
+<xsl:if test="RDF:RDF/RDF:Description[@uc:for='urn:root:props']/uc:props/uc:legacy.combination_privilege = 'true'">
+	<div class="box">
+		<h3><a href="combination.html">Сombination of blocked and blocking activity</a></h3>
+		<ul>
+			<li>Lock 으로 대기하고 있는 sql 현황을 조회한다.</li>
+		</ul>
+	</div>
+</xsl:if>
+<xsl:if test="RDF:RDF/RDF:Description[@uc:for='urn:root:props']/uc:props/uc:legacy.pg_stat_privilege = 'true'">
+	<div class="box">
+		<h3><a href="pg_stat.html">pg_stat 로 시작하는 View</a></h3>
+		<ul>
+			<li>pg_stat 로 시작하는 View를 조회한다.</li>
+		</ul>
+	</div>
+</xsl:if>
+<xsl:if test="RDF:RDF/RDF:Description[@uc:for='urn:root:props']/uc:props/uc:legacy.pg_catalog_privilege = 'true'">
+	<div class="box">
+		<h3><a href="pg_catalog.html">pg_catalog</a></h3>
+		<ul>
+			<li>pg_catalog 및 information_schema 을 조회한다.</li>
+		</ul>
+	</div>
+</xsl:if>
+		]]></layout>
+	</query>
+	<query
+		id="combination" 
+		funcType="listAll" 
+		label="Сombination of blocked and blocking activity"
+		desc="
+			Lock 으로 대기하고 있는 sql 현황을 조회한다.
+			(https://wiki.postgresql.org/wiki/Lock_Monitoring)
+			조회결과가 없는 것이 일반적이다.
+			SELECT pg_cancel_backend(pid) 혹은 SELECT pg_terminate_backend(pid) 명령을 실행하여 SQL 실행을 취소할 수 있지만,
+			프로그램의 구조적인 문제가 있는지 살피는 것이 좋다.
+		"
+		allowblank="true"
+	>
+		<header />
+		<commands>
+			<command name="combination">
+				<sql>
+					<tile cond="${prop.legacy.combination_privilege} = 'false'">
+select version() where 1 != 1
+					</tile>
+					<tile cond="${prop.legacy.combination_privilege} = 'true'">
+SELECT
+	blocked_locks.pid	AS blocked_pid,
+	blocked_activity.usename	AS blocked_user,
+	blocking_locks.pid	AS blocking_pid,
+	blocking_activity.usename	AS blocking_user,
+					</tile>
+					<tile cond="${prop.legacy.combination_privilege_and_is_legacy} = 'true.modern'">
+	blocked_activity.query	AS blocked_statement,
+	blocking_activity.query	AS current_statement_in_blocking_process,
+					</tile>
+					<tile cond="${prop.legacy.combination_privilege_and_is_legacy} = 'true.legacy'">
+	blocked_activity.current_query	AS blocked_statement,
+	blocking_activity.current_query	AS current_statement_in_blocking_process,
+					</tile>
+					<tile cond="${prop.legacy.combination_privilege} = 'true'">
+	blocked_activity.application_name	AS blocked_application,
+	blocking_activity.application_name	AS blocking_application
+FROM  pg_catalog.pg_locks	blocked_locks
+					</tile>
+					<tile cond="${prop.legacy.combination_privilege_and_is_legacy} = 'true.modern'">
+	JOIN pg_catalog.pg_stat_activity	blocked_activity	ON blocked_activity.pid = blocked_locks.pid
+					</tile>
+					<tile cond="${prop.legacy.combination_privilege_and_is_legacy} = 'true.legacy'">
+	JOIN pg_catalog.pg_stat_activity	blocked_activity	ON blocked_activity.procpid = blocked_locks.pid
+					</tile>
+					<tile cond="${prop.legacy.combination_privilege} = 'true'">
+	JOIN pg_catalog.pg_locks	blocking_locks 
+		ON blocking_locks.locktype = blocked_locks.locktype
+			AND blocking_locks.DATABASE IS NOT DISTINCT FROM blocked_locks.DATABASE
+			AND blocking_locks.relation IS NOT DISTINCT FROM blocked_locks.relation
+			AND blocking_locks.page IS NOT DISTINCT FROM blocked_locks.page
+			AND blocking_locks.tuple IS NOT DISTINCT FROM blocked_locks.tuple
+			AND blocking_locks.virtualxid IS NOT DISTINCT FROM blocked_locks.virtualxid
+			AND blocking_locks.transactionid IS NOT DISTINCT FROM blocked_locks.transactionid
+			AND blocking_locks.classid IS NOT DISTINCT FROM blocked_locks.classid
+			AND blocking_locks.objid IS NOT DISTINCT FROM blocked_locks.objid
+			AND blocking_locks.objsubid IS NOT DISTINCT FROM blocked_locks.objsubid
+			AND blocking_locks.pid != blocked_locks.pid
+					</tile>
+					<tile cond="${prop.legacy.combination_privilege_and_is_legacy} = 'true.modern'">
+	JOIN pg_catalog.pg_stat_activity blocking_activity ON blocking_activity.pid = blocking_locks.pid
+					</tile>
+					<tile cond="${prop.legacy.combination_privilege_and_is_legacy} = 'true.legacy'">
+	JOIN pg_catalog.pg_stat_activity blocking_activity ON blocking_activity.procpid = blocking_locks.pid
+					</tile>
+					<tile cond="${prop.legacy.combination_privilege} = 'true'">
+WHERE NOT blocked_locks.GRANTED
+/*
+https://wiki.postgresql.org/wiki/Lock_Monitoring
+*/
+					</tile>
+				</sql>
+			</command>
+		</commands>
+		<layout>
+			<top>
+				<right>
+					<link name="index" label="Home" path="index" />
+				</right>
+			</top>
+			<middle>
+				<tab name="combination" label="Сombination of blocked and blocking activity" column="auto" />
+			</middle>
+		</layout>
+	</query>
+	<query id="tablespace" funcType="listAll" label="테이블스페이스 현황" allowblank="true">
+		<header>
+			<style>
+table#tablespace td.tablespace_size {
+	text-align:right;
+}
+			</style>
+		</header>
+		<commands>
+			<command name="tablespace">
+				<sql>
+					<tile cond="${prop.legacy.tablespace_privilege} = 'false'">
+select version() where 1 != 1
+					</tile>
+					<tile cond="${prop.legacy.tablespace_privilege} = 'true'">
+select 
+	tablespace_name, 
+	pg_size_pretty(tablespace_size) as tablespace_size, 
+	datafile
+from (
+	select
+		spcname as tablespace_name
+		, case
+			when has_tablespace_privilege(current_user, spcname, 'CREATE') = true
+				or exists (select * from pg_database where pg_tablespace.oid = pg_database.dattablespace and pg_database.datname = current_database())
+			then pg_tablespace_size(pg_tablespace.spcname)
+		end as tablespace_size
+</tile>
+					<tile cond="${prop.legacy.tablespace_privilege_and_is_legacy} = 'true.modern'">
+		, pg_tablespace_location(oid) as datafile
+					</tile>
+					<tile cond="${prop.legacy.tablespace_privilege_and_is_legacy} = 'true.legacy'">
+		, spclocation as datafile
+					</tile>
+					<tile cond="${prop.legacy.tablespace_privilege} = 'true'">
+	from pg_tablespace
+	order by 2 desc NULLS LAST
+) _
+					</tile>
+				</sql>
+			</command>
+		</commands>
+		<layout>
+			<top>
+				<right>
+					<link name="index" label="Home" path="index" />
+				</right>
+			</top>
+			<middle>
+				<tab name="tablespace" label="테이블스페이스 현황">
+					<column label="테이블스페이스 이름" name="tablespace_name" />
+					<column label="데이타파일 위치" name="datafile" />
+					<column label="테이블스페이스 사용량" name="tablespace_size" />
+				</tab>
+			</middle>
+		</layout>
+	</query>
+	<query id="database" funcType="listAll" label="데이타베이스 현황" allowblank="true">
+		<header>
+			<style>
+table#database td.database_size {
+	text-align:right;
+}
+table#database td.buffer_cache_hit_ratio {
+	text-align:center;
+}
+			</style>
+		</header>
+		<commands>
+			<command name="database">
+				<sql>
+					<tile cond="${prop.legacy.database_privilege} = 'false'">
+select version() where 1 != 1
+					</tile>
+					<tile cond="${prop.legacy.database_privilege} = 'true'">
+select
+	pg_database.datname as database_name
+	, pg_encoding_to_char(pg_database.encoding) as encoding_name
+	, pg_database.datcollate as collate
+	, pg_database.datctype as ctype
+	, pg_tablespace.spcname as tablespace_name
+					</tile>
+					<tile cond="${prop.legacy.database_privilege_and_is_legacy} = 'true.modern'">
+	, pg_tablespace_location(pg_tablespace.oid) as datafile
+					</tile>
+					<tile cond="${prop.legacy.database_privilege_and_is_legacy} = 'true.legacy'">
+	, pg_tablespace.spclocation as datafile
+					</tile>
+					<tile cond="${prop.legacy.database_privilege} = 'true'">
+	, pg_size_pretty(pg_database_size(pg_database.datname)) as database_size
+	, (
+		select 
+			(100 * blks_hit / (blks_hit + blks_read)) || ' %' 
+		from pg_stat_database 
+		where pg_database.datname = pg_stat_database.datname
+			and (blks_hit + blks_read) > 0
+	) as buffer_cache_hit_ratio
+	, (select usename from pg_user where pg_database.datdba = pg_user.usesysid) as usename
+from pg_database
+	left outer join pg_tablespace on pg_tablespace.oid = pg_database.dattablespace
+order by pg_database_size(pg_database.datname) desc
+					</tile>
+				</sql>
+			</command>
+		</commands>
+		<layout>
+			<top>
+				<right>
+					<link name="index" label="Home" path="index" />
+				</right>
+			</top>
+			<middle>
+				<tab name="database" label="데이타베이스 현황">
+					<column label="이름" name="database_name" />
+					<column label="Owner" name="usename" />
+					<column label="인코딩" name="encoding_name" />
+					<column label="Collate" name="collate" />
+					<column label="Ctype" name="ctype" />
+					<column label="테이블스페이스" name="tablespace_name" />
+					<column label="데이타파일" name="datafile" />
+					<column label="데이타베이스 사용량" name="database_size" />
+					<column label="Buffer Cache Hit Ratio" name="buffer_cache_hit_ratio" />
+				</tab>
+			</middle>
+		</layout>
+	</query>
+	<query id="table" funcType="listAll" label="테이블 현황" allowblank="true">
+		<header>
+			<style>
+table#table td.table_size,
+table#table td.index_size,
+table#table td.total_size,
+table#table td.n_live_tup,
+table#table td.reltuples
+{
+	text-align:right;
+}
+table#table td.hit_rate,
+table#table td.index_hit_rate,
+table#table td.index_used_percent
+{
+	text-align:center;
+}
+			</style>
+		</header>
+		<commands>
+			<command name="table">
+				<sql>
+					<tile cond="${prop.legacy.table_privilege} = 'false'">
+select version() where 1 != 1
+					</tile>
+					<tile cond="${prop.legacy.table_privilege} = 'true'">
+select
+	schemaname as schema_name,
+	tablename as table_name,
+	tableowner as table_owner,
+	COALESCE(
+		tablespace,
+		(
+			select pg_tablespace.spcname
+			from pg_database
+				left outer join pg_tablespace on pg_tablespace.oid = pg_database.dattablespace
+			where datname = current_database()
+		)
+	) as tablespace_name,
+	pg_size_pretty(pg_table_size(schemaname || '.' || tablename)) as table_size,
+/*
+	pg_size_pretty(pg_relation_size((schemaname || '.' || tablename)::regclass)) as table_size,
+*/
+	pg_size_pretty(pg_indexes_size(schemaname || '.' || tablename)) as index_size,
+	pg_size_pretty(pg_total_relation_size(schemaname || '.' || tablename)) as total_size,
+	(
+		select 
+			(100 * heap_blks_hit / (heap_blks_hit + heap_blks_read)) || ' %' 
+		FROM pg_statio_user_tables
+		where pg_tables.schemaname = pg_statio_user_tables.schemaname
+			and pg_tables.tablename = pg_statio_user_tables.relname
+			and (heap_blks_hit + heap_blks_read) > 0
+	) as hit_rate,
+	(
+		select
+			round(100 * ((sum(idx_blks_hit) - sum(idx_blks_read)) / sum(idx_blks_hit))) || ' %'
+		FROM pg_statio_user_indexes
+		where pg_tables.schemaname = pg_statio_user_indexes.schemaname
+			and pg_tables.tablename = pg_statio_user_indexes.relname
+		having sum(idx_blks_hit) > 0
+	) as index_hit_rate,
+	(
+		select
+			(100 * idx_scan / (seq_scan + idx_scan)) || ' %' 
+		FROM pg_stat_user_tables
+		WHERE pg_tables.schemaname = pg_stat_user_tables.schemaname
+			and pg_tables.tablename = pg_stat_user_tables.relname
+			and seq_scan + idx_scan > 0
+	) as index_used_percent,
+	(
+		SELECT n_live_tup
+		FROM pg_stat_user_tables
+		WHERE pg_tables.schemaname = pg_stat_user_tables.schemaname
+			and pg_tables.tablename = pg_stat_user_tables.relname
+	) as n_live_tup,
+	(
+		select
+			reltuples
+		from pg_class
+			inner join pg_namespace on pg_class.relnamespace = pg_namespace.oid
+		where pg_class.relname = pg_tables.tablename
+			and pg_namespace.nspname = pg_tables.schemaname
+			and pg_class.relkind = 'r'
+	) as reltuples
+from pg_tables
+where schemaname not in ('pg_catalog', 'information_schema')
+order by pg_total_relation_size(schemaname || '.' || tablename) desc
+					</tile>
+				</sql>
+			</command>
+		</commands>
+		<layout>
+			<top>
+				<right>
+					<link name="index" label="Home" path="index" />
+				</right>
+			</top>
+			<middle>
+				<tab name="table" label="테이블 현황">
+					<column label="스키마" name="schema_name" />
+					<column label="테이블" name="table_name" />
+<!--
+					<column label="소유자" name="table_owner" />
+-->
+					<column label="테이블스페이스" name="tablespace_name" />
+					<column label="n_live_tup" name="n_live_tup" fmt="#,##0" />
+					<column label="reltuples" name="reltuples" fmt="#,##0" />
+					<column label="테이블 크기" name="table_size">
+						<link path="data">
+							<param name="schema_name" type="query" value="schema_name" />
+							<param name="table_name" type="query" value="table_name" />
+						</link>
+					</column>
+					<column label="인덱스 크기" name="index_size">
+						<link path="indexes">
+							<param name="schema_name" type="query" value="schema_name" />
+							<param name="table_name" type="query" value="table_name" />
+						</link>
+					</column>
+					<column label="크기" name="total_size" />
+					<column label="Hit Rate" name="hit_rate" />
+					<column label="Index Hit Rate" name="index_hit_rate" />
+					<column label="Index Used" name="index_used_percent" />
+				</tab>
+			</middle>
+		</layout>
+	</query>
+	<query id="activity" funcType="listAll" label="연결 현황" desc="select pg_terminate_backend(pid) 를 실행하면 강제로 연결을 종료할 수 있다." allowblank="true">
+		<header />
+		<commands>
+			<command name="activity">
+				<sql>
+					<tile cond="${prop.legacy.activity_privilege} = 'false'">
+select version() where 1 != 1
+					</tile>
+					<tile cond="${prop.legacy.activity_privilege} = 'true'">
+SELECT
+	datname as database_name
+					</tile>
+					<tile cond="${prop.legacy.activity_privilege_and_is_legacy} = 'true.modern'">
+	, pid
+					</tile>
+					<tile cond="${prop.legacy.activity_privilege_and_is_legacy} = 'true.legacy'">
+	, procpid as pid
+					</tile>
+					<tile cond="${prop.legacy.activity_privilege} = 'true'">
+	, usename as user_name
+	, application_name
+	, client_addr
+	, query_start
+					</tile>
+					<tile cond="${prop.legacy.activity_privilege_and_is_legacy} = 'true.modern'">
+	, state
+	, query
+					</tile>
+					<tile cond="${prop.legacy.activity_privilege_and_is_legacy} = 'true.legacy'"><![CDATA[
+	, case when current_query = '<IDLE>' then 'idle' else 'active' end as status
+	, current_query
+					]]></tile>
+					<tile cond="${prop.legacy.activity_privilege} = 'true'">
+FROM pg_stat_activity 
+where datname is not null
+order by 7
+					</tile>
+				</sql>
+			</command>
+		</commands>
+		<layout>
+			<top>
+				<right>
+					<link name="index" label="Home" path="index" />
+				</right>
+			</top>
+			<middle>
+				<tab name="activity" label="연결 현황">
+					<column label="데이타베이스 이름" name="database_name" />
+					<column label="PID" name="pid" />
+					<column label="사용자 이름" name="user_name" />
+					<column label="프로그램 이름" name="application_name" />
+					<column label="클라이언트 IP" name="client_addr" />
+					<column label="Query Start" name="query_start" />
+					<column label="상태" name="state" />
+					<column label="Query" name="query" />
+				</tab>
+			</middle>
+		</layout>
+	</query>
+	<query id="pg_stat" funcType="listAll" label="pg_stat*" allowblank="true">
+		<header />
+		<commands>
+			<command name="pg_stat">
+				<sql>
+					<tile cond="${prop.legacy.pg_stat_privilege} = 'false'">
+select version() where 1 != 1
+					</tile>
+					<tile cond="${prop.legacy.pg_stat_privilege} = 'true'">
+select
+	schemaname as schema_name,
+	viewname as view_name,
+	viewowner as view_owner
+from pg_views
+where viewname like 'pg_stat%'
+	and has_table_privilege(current_user, schemaname || '.' || viewname, 'select') = true
+					</tile>
+				</sql>
+			</command>
+		</commands>
+		<layout>
+			<top>
+				<right>
+					<link name="index" label="Home" path="index" />
+				</right>
+			</top>
+			<middle>
+				<tab name="pg_stat" label="pg_stat*">
+					<column label="Schema Name" name="schema_name" />
+					<column label="View Name" name="view_name">
+						<link path="data">
+							<param name="pg_stat_view_name" type="query" value="view_name" />
+							<param name="schema_name" type="query" value="schema_name" />
+						</link>
+					</column>
+					<column label="View Owner" name="view_owner" />
+				</tab>
+			</middle>
+		</layout>
+	</query>
+	<query id="pg_catalog" funcType="listAll" label="pg_catalog and information_schema" allowblank="true">
+		<header />
+		<commands>
+			<command name="pg_catalog">
+				<sql>
+					<tile cond="${prop.legacy.pg_catalog_privilege} = 'false'">
+select version() where 1 != 1
+					</tile>
+					<tile cond="${prop.legacy.pg_catalog_privilege} = 'true'">
+select
+	'view' as type,
+	schemaname as schema_name,
+	viewname as name,
+	viewowner as owner
+from pg_views
+where schemaname in ('information_schema', 'pg_catalog')
+	and viewname not like 'pg_stat%'
+	and has_table_privilege(current_user, schemaname || '.' || viewname, 'select') = true
+union all
+select
+	'table' as type,
+	schemaname as schema_name,
+	tablename as name,
+	tableowner as owner
+from pg_tables
+where schemaname in ('information_schema', 'pg_catalog')
+	and has_table_privilege(current_user, schemaname || '.' || tablename, 'select') = true
+order by 2, 1, 3
+					</tile>
+				</sql>
+			</command>
+		</commands>
+		<layout>
+			<top>
+				<right>
+					<link name="index" label="Home" path="index" />
+				</right>
+			</top>
+			<middle>
+				<tab name="pg_catalog" label="pg_catalog">
+					<column label="Type" name="type" />
+					<column label="Schema Name" name="schema_name" />
+					<column label="Name" name="name">
+						<link path="data">
+							<param name="pg_catalog_name" type="query" value="name" />
+							<param name="schema_name" type="query" value="schema_name" />
+						</link>
+					</column>
+					<column label="Owner" name="owner" />
+				</tab>
+			</middle>
+		</layout>
+	</query>
+	<query 
+		id="data" 
+		funcType="list" 
+		label="테이블 데이타" 
+		output="rdf"
+	>
+		<header>
+			<labels>
+				<label cond="${param.pg_catalog_name} isNotEmpty" text="테이블 데이타(${/document/params/pg_catalog_name})" xText="테이블 데이타(${/RDF:RDF/RDF:Description[@uc:for='urn:root:params']/uc:params/uc:pg_catalog_name})" />
+				<label cond="${param.pg_stat_view_name} isNotEmpty" text="테이블 데이타(${/document/params/pg_stat_view_name})" xText="테이블 데이타(${/RDF:RDF/RDF:Description[@uc:for='urn:root:params']/uc:params/uc:pg_stat_view_name})" />
+				<label cond="${param.table_name} isNotEmpty" text="테이블 데이타(${/document/params/table_name})" xText="테이블 데이타(${/RDF:RDF/RDF:Description[@uc:for='urn:root:params']/uc:params/uc:table_name})" />
+			</labels>
+			<prop name="table_name" value="${param.schema_name}.${param.pg_catalog_name}" cond="${param.pg_catalog_name} isNotEmpty" />
+			<prop name="table_name" value="${param.schema_name}.${param.pg_stat_view_name}" cond="${param.pg_stat_view_name} isNotEmpty" />
+			<prop name="table_name" value="${param.schema_name}.${param.table_name}" cond="${param.table_name} isNotEmpty" />
+			<prop name="privilege">
+				<sql>
+select 
+	case 
+		when 
+			has_table_privilege(current_user, ?, 'select') = true 
+		then 'true' 
+		else 'false' 
+	end as select_privilege
+				</sql>
+				<params>
+					<param datatype="varchar" value="prop.table_name" />
+				</params>
+			</prop>
+		</header>
+		<commands>
+			<command name="table_data">
+				<sql pageSize="10" pageGroupSize="10">
+					<tile cond="${prop.privilege.select_privilege} = 'false'">
+select version() where 1 != 1
+					</tile>
+					<tile cond="${prop.privilege.select_privilege} = 'true'">
+select * from
+					</tile>
+<entity cond="${prop.privilege.select_privilege} = 'true'">${prop.table_name}</entity>
+				</sql>
+				<sql_cnt>
+					<tile cond="${prop.privilege.select_privilege} = 'false'">
+select 0 where 1 != 1
+					</tile>
+					<tile cond="${prop.privilege.select_privilege} = 'true'">
+select count(*) from
+					</tile>
+<entity cond="${prop.privilege.select_privilege} = 'true'">${prop.table_name}</entity>
+				</sql_cnt>
+			</command>
+		</commands>
+		<layout>
+			<top>
+				<left>
+					<link name="pg_stat" label="pg_stat*" path="pg_stat" cond="${param.pg_stat_view_name} isNotEmpty" />
+					<link name="pg_catalog" label="pg_catalog" path="pg_catalog" cond="${param.pg_catalog_name} isNotEmpty" />
+					<link name="table" label="table" path="table" cond="${param.table_name} isNotEmpty" />
+				</left>
+				<center>page</center>
+				<right>
+					<link name="index" label="Home" path="index" />
+				</right>
+			</top>
+			<middle>
+				<tab name="table_data" label="테이블 데이타" column="auto" />
+			</middle>
+			<bottom>
+				<center>page</center>
+			</bottom>
+		</layout>
+	</query>
+	<query id="indexes" funcType="listAll" label="인덱스 현황" output="rdf" allowblank="true">
+		<header>
+			<labels>
+				<label 
+					text="인덱스 현황(${/document/params/schema_name}.${/document/params/table_name})" 
+					xText="인덱스 현황(${/RDF:RDF/RDF:Description[@uc:for='urn:root:params']/uc:params/uc:schema_name}.${/RDF:RDF/RDF:Description[@uc:for='urn:root:params']/uc:params/uc:table_name})"
+				/>
+			</labels>
+		</header>
+		<commands>
+			<command name="indexes">
+				<sql>
+select
+	indexname,
+	(
+		select
+			pg_size_pretty(pg_relation_size(pg_class.oid))
+		from pg_class
+			inner join pg_namespace on pg_class.relnamespace = pg_namespace.oid
+		where pg_class.relname = pg_indexes.indexname
+			and pg_namespace.nspname = pg_indexes.schemaname
+			and pg_class.relkind = 'i'
+	) as index_size,
+	indexdef
+from pg_indexes
+where schemaname = ? and tablename = ?
+
+				</sql>
+				<params>
+					<param name="schemaname" datatype="varchar" value="param.schema_name" />
+					<param name="tablename" datatype="varchar" value="param.table_name" />
+				</params>
+			</command>
+		</commands>
+		<layout>
+			<top>
+				<left>
+					<link name="table" label="Table" path="table" />
+				</left>
+				<right>
+					<link name="index" label="Home" path="index" />
+				</right>
+			</top>
+			<middle>
+				<tab name="indexes" label="Indexes">
+					<column label="이름" name="indexname" />
+					<column label="인덱스 크기" name="index_size" />
+					<column label="상세내역" name="indexdef" />
+				</tab>
+			</middle>
+		</layout>
+	</query>
+</querys>
