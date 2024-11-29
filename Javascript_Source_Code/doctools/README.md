@@ -10,7 +10,7 @@ Graha 문서화 도구 (GrahaDocTools.js)는 웹페이지에 원문자가 담겨
 
 ### 1.2. 다운로드
 
-https://github.com/logicielkr/client_lib/tree/master/doctools/0.5.0.0
+https://github.com/logicielkr/misc/tree/master/Javascript_Source_Code/doctools
 
 ### 1.3. 호환성
 
