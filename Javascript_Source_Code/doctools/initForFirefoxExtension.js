@@ -1,0 +1,1 @@
+GrahaDocTools.addMenuForFirefoxExtension();

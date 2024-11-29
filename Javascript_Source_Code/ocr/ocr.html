@@ -1,0 +1,572 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, width=device-width" />
+<meta charset="utf-8" />
+<title>OCR</title>
+<link rel="icon" href="/favicon.svg" sizes="16x16" type="image/svg+xml" />
+<link rel="preload" href="//cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" as="script">
+<script>
+var iserror = false;
+var supportWebAssembly = true;
+window.onerror = function() {
+	if(window.document.documentMode) {
+	} else {
+		iserror = true;
+	}
+}
+if(typeof(WebAssembly) == "undefined") {
+	supportWebAssembly = false;
+}
+var openCvLoaded = false;
+var tesseractLoaded = false;
+function onOpenCvReady(event) {
+	openCvLoaded = true;
+}
+function onTesseractReady(event) {
+	tesseractLoaded = true;
+}
+</script>
+<script src="//cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
+<link href="//cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css" rel="stylesheet">
+<!--
+<script src="//cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+<script src="//cdn.jsdelivr.net/npm/opencv-bindings@4.5.5/index.min.js"></script>
+-->
+<script async src="//cdn.jsdelivr.net/npm/opencv-bindings@4.5.5/index.min.js" onload="onOpenCvReady();" type="text/javascript"></script>
+<script async src="//cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js" onload="onTesseractReady();" type="text/javascript"></script>
+<script src="//cdn.jsdelivr.net/npm/@ungap/url-search-params@0.2.2/min.js"></script>
+<style>
+div#warningIE {
+	display:none;
+}
+div#error {
+	position:fixed; top:0px; left:0px; bottom:0px; right:0px; background-color:#F3F3F3; color:red;text-align: center;padding: 70px 0;
+	display:none;
+}
+@media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+	div#warningIE {
+		display:block;
+		position:fixed; top:0px; left:0px; bottom:0px; right:0px; background-color:#F3F3F3; color:red;text-align: center;padding: 70px 0;
+	}
+}
+</style>
+<!--[if IE]>
+<style>
+div#warningIE {
+	display:block;
+	position:fixed; top:0px; left:0px; bottom:0px; right:0px; background-color:#F3F3F3; color:red;text-align: center;padding: 70px 0;
+}
+</style>
+<![endif]-->
+<style>
+body {
+	height:100%;
+}
+.container {
+	width:100%;
+	display: block;
+	position: fixed;
+	top: 50;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height:calc(100% - 50px);
+}
+img#image {
+	max-width:100%;
+	display: block;
+}
+.cropper-crop-box {
+	background-color: white;
+}
+footer.fullscreen {
+	position:fixed; top:0px; left:0px; bottom:0px; right:0px; background-color:#F3F3F3; color:red;text-align: center;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	background-color:#F3F3F3;
+}
+footer.bottom {
+	width: 100%;
+	display: block;
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	background-color:#F3F3F3;
+	height:50px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+footer progress {
+	width:100%;
+}
+header {
+	width: 100%;
+	display: block;
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	background-color:#F3F3F3;
+	height:50px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+header h1 {
+	margin-left:10px;
+}
+header button {
+	margin-right:10px;
+}
+body {
+	height:100%;
+}
+div#result {
+	width: 100%;
+	display: block;
+	position: fixed;
+	top: 50;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: calc(100% - 50px);
+	display: flex;
+	justify-content: center;
+	flex-direction: column;
+	display:none;
+}
+div#result button {
+	display: block;
+	margin: 5px auto;
+}
+div#result textarea {
+	display: block;
+	margin: auto auto;
+	width:300px;
+	height:200px;
+}
+</style>
+<script>
+var cropper = null;
+var fileName = null;
+var imageMimeType = null;
+function showProgress() {
+	$("progress").attr("value", 0);
+	$("footer").removeClass("bottom");
+	$("footer").addClass("fullscreen");
+}
+function hideProgress() {
+	$("footer").removeClass("fullscreen");
+	$("footer").addClass("bottom");
+}
+function showResult(result) {
+	$("div#result").css("display", "flex");
+	$("div#result textarea").val(result);
+}
+function hideResult(result) {
+	$("div#result").css("display", "none");
+	$("div#result textarea").val("");
+}
+function showError() {
+	iserror = true;
+	$("div#error").css("display", "block");
+}
+function guessMimeTypeFromFileName(fileName) {
+	if(fileName) {
+		if(fileName != null) {
+			if(
+				fileName.lastIndexOf(".jpg") == fileName.length - ".jpg".length ||
+				fileName.lastIndexOf(".jpeg") == fileName.length - ".jpeg".length
+			) {
+				return "image/jpeg";
+			} else if(fileName.lastIndexOf(".png") == fileName.length - ".png".length) {
+				return "image/png";
+			} else if(fileName.lastIndexOf(".gif") == fileName.length - ".gif".length) {
+				return "image/gif";
+			}
+		}
+	}
+	return null;
+}
+function getFileName(url) {
+	if(url) {
+		if(url != null) {
+			if(url.pathname) {
+				if(url.pathname != null) {
+					return url.pathname.substring(url.pathname.lastIndexOf("/") + 1);
+				}
+			}
+		}
+	}
+	return null;
+}
+function displayImage(src) {
+	if(cropper != null) {
+		cropper.destroy();
+		cropper.replace(src);
+	}
+	if(cropper == null) {
+		$("img#image").attr("src", src);
+		$("img#image").on("load", function() {
+			if($(this).height() > $(window).height() - ($(this).offset().top + 50)) {
+				$(this).height(Math.floor($(window).height() - ($(this).offset().top + 50)));
+			}
+			if(cropper == null) {
+				cropper = new Cropper(
+					this,
+					{
+						viewMode: true,
+						autoCrop: false,
+						guides: false,
+						ovable: false,
+						zoomable: true,
+						rotatable: false,
+						scalable: false
+					}
+				);
+			}
+		});
+	}
+}
+function loadImageFromUrl(path) {
+	var image = new Image();
+	image.addEventListener("load", function(event) {
+		fileName = getFileName(new URL(this.src));
+		imageMimeType = guessMimeTypeFromFileName(fileName);
+		displayImage(this.src);
+	});
+	image.src = path;
+}
+function loadImage(file) {
+	var reader = new FileReader();
+	showProgress();
+	reader.addEventListener("progress", function(event) {
+		$("progress").attr("value", (event.loaded/event.total).toFixed(2) * 100);
+	});
+	reader.addEventListener("load", function(event) {
+		$("progress").attr("value", 100);
+		if(event.target.result.substring(0, 11) == "data:image/") {
+			fileName = file.name;
+			imageMimeType = event.target.result.substring(5, event.target.result.indexOf(";"));
+			displayImage(event.target.result);
+		}
+		hideProgress();
+	});
+	reader.readAsDataURL(file);
+}
+function removeDragData(event) {
+	if (event.dataTransfer.items) {
+		event.dataTransfer.items.clear();
+	} else {
+		event.dataTransfer.clearData();
+	}
+}
+function dropHandler(event) {
+	event.preventDefault();
+	var file = null;
+	if (event.dataTransfer.items) {
+		if(event.dataTransfer.items.length > 0) {
+			file = event.dataTransfer.items[0].getAsFile();
+		}
+	} else if(event.dataTransfer.files) {
+		if(event.dataTransfer.files.length > 0) {
+			file = event.dataTransfer.files[0];
+		}
+	}
+	if(file != null) {
+		loadImage(file);
+	}
+	removeDragData(event)
+}
+function dragOverHandler(event) {
+	event.preventDefault();
+}
+$(document).ready(function() {
+	if(iserror) {
+		showError();
+		return;
+	}
+	$("input#file").on("change", function() {
+		for(var i = 0; i < this.files.length; i++) {
+			var file = this.files[i];
+			loadImage(file);
+		}
+	});
+	var params = new URLSearchParams(document.location.search.substring(1));
+	if(params.get("image") != null && params.get("image") != "") {
+		loadImageFromUrl(params.get("image"));
+	}
+});
+function ocr(canvas) {
+	if(iserror) {
+		showError();
+		return;
+	}
+	canvas.toBlob(function(blob) {
+		var lang = $("select#lang").val();
+		if(lang == "eng+kor") {
+			lang = ["eng", "kor"];
+		}
+		var options = null;
+		if(lang == "digit") {
+			lang = "eng";
+		}
+		options = {
+			langPath: "https://tessdata.projectnaptha.com/4.0.0_best",
+			logger: function(m) {
+				$("progress").attr("value", (m.progress).toFixed(2) * 100);
+			}
+		};
+		var worker = Tesseract.createWorker(options).then(function(w) {
+			w.loadLanguage(lang).then(function(result) {
+				w.initialize(lang).then(function(result) {
+					if($("select#lang").val() == "digit") {
+						w.setParameters({
+							tessedit_char_whitelist: "0123456789-,."
+						}).then(function(result) {
+							recognize(blob, w);
+						});
+					} else {
+						recognize(blob, w);
+					}
+				}).catch(function(err) {
+					console.error(err);
+					showError();
+				});;
+			}).catch(function(err) {
+				console.error(err);
+				showError();
+			});
+		}).catch(function(err) {
+			console.error(err);
+			showError();
+		});
+	}, "image/png", 1);
+}
+function recognize(blob, worker) {
+	worker.recognize(
+		blob
+	).then(function(result) {
+		showResult(result.data.text);
+		hideProgress();
+		worker.terminate().then(function(result) {
+			console.log("worker terminate");
+		}).catch(function(err) {
+			console.error(err);
+			showError();
+		});
+	}).catch(function(err) {
+		console.error(err);
+		showError();
+	});
+}
+function grayscale_with_opencv() {
+	var canvas = cropper.getCroppedCanvas();
+	var source = cv.imread(cropper.getCroppedCanvas());
+	var imageForOcr = new cv.Mat.zeros(source.rows, source.cols, source.type());
+	cv.pyrDown(source, imageForOcr);
+	cv.cvtColor(imageForOcr, imageForOcr, cv.COLOR_BGR2GRAY);
+	var kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(3, 3));
+	cv.morphologyEx(imageForOcr, imageForOcr, cv.MORPH_GRADIENT, kernel);
+	cv.threshold(imageForOcr, imageForOcr, 177, 200, cv.THRESH_BINARY | cv.THRESH_OTSU);
+	cv.imshow(canvas, imageForOcr);
+	imageForOcr.delete();
+	source.delete();
+	return canvas;
+}
+function grayscale_with_opencv_gaussianblur() {
+	if(iserror) {
+		showError();
+		return;
+	}
+	var canvas = cropper.getCroppedCanvas();
+	var src = cv.imread(cropper.getCroppedCanvas());
+	var dst = new cv.Mat.zeros(src.rows, src.cols, src.type());
+	cv.normalize(src, dst, 0, 255, cv.NORM_MINMAX);
+	var ksize = new cv.Size(5, 5);
+	cv.GaussianBlur(src, dst, ksize, 0, 0, cv.BORDER_DEFAULT);
+	cv.cvtColor(dst, dst, cv.COLOR_BGR2GRAY);
+	cv.threshold(dst, dst, 177, 255, cv.THRESH_OTSU);
+	cv.imshow(canvas, dst);
+	src.delete();
+	dst.delete();
+	return canvas;
+}
+function grayscale_with_opencv_only_threshold() {
+	if(iserror) {
+		showError();
+		return;
+	}
+	var canvas = cropper.getCroppedCanvas();
+	var src = cv.imread(cropper.getCroppedCanvas());
+	var dst = new cv.Mat();
+	cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY);
+	cv.threshold(dst, dst, 177, 200, cv.THRESH_OTSU);
+	cv.imshow(canvas, dst);
+	src.delete();
+	dst.delete();
+	return canvas;
+}
+function none() {
+	var canvas = cropper.getCroppedCanvas();
+	return canvas;
+}
+function grayscale() {
+//https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Pixel_manipulation_with_canvas
+	var canvas = cropper.getCroppedCanvas();
+	var ctx = canvas.getContext("2d");
+	var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+	var data = imageData.data;
+	for (let i = 0; i < data.length; i += 4) {
+		var avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+		data[i] = avg; // red
+		data[i + 1] = avg; // green
+		data[i + 2] = avg; // blue
+	}
+	ctx.putImageData(imageData, 0, 0);
+	return canvas;
+}
+
+function convert() {
+	if(iserror) {
+		showError();
+		return;
+	}
+	if(!openCvLoaded || !tesseractLoaded) {
+		alert("아직 이미지 처리를 위한 라이브러리를 불어오지 못했습니다.  잠시 후에 다시 시도해 주세요.");
+		return;
+	}
+	if(cropper == null) {
+		alert("이미지 파일을 선택하세요.");
+		return;
+	}
+	showProgress();
+	var preprocessing = $("select#preprocessing").val();
+	var canvas = null;
+	
+	if(supportWebAssembly) {
+		if(preprocessing == "opencv") {
+			canvas = grayscale_with_opencv();
+		} else if(preprocessing == "opencv_gaussianblur") {
+			canvas = grayscale_with_opencv_gaussianblur();
+		} else if(preprocessing == "opencv_only_threshold") {
+			canvas = grayscale_with_opencv_only_threshold();
+		} else {
+			canvas = grayscale_with_opencv_only_threshold();
+		}
+	} else {
+		canvas = grayscale();
+	}
+	ocr(canvas);
+}
+function crop() {
+	if(iserror) {
+		showError();
+		return;
+	}
+	if(cropper == null) {
+		alert("이미지 파일을 선택하세요.");
+		return;
+	}
+	showProgress();
+	var canvas = cropper.getCroppedCanvas();
+	canvas.toBlob(function(blob) {
+		var index = fileName.lastIndexOf(".");
+		var croppedFileName = null;
+		if(index > 0) {
+			croppedFileName = fileName.substring(0, index) + ".cropped" + fileName.substring(index);
+		} else {
+			croppedFileName = fileName + ".cropped." + imageMimeType.substring(imageMimeType.indexOf("/") + 1);
+		}
+		downloadBlob(blob, croppedFileName, imageMimeType);
+		hideProgress();
+	}, imageMimeType, 1);
+}
+function downloadOpenCVImage(canvas, image, fileName) {
+	cv.imshow(canvas, image);
+	downloadCanvas(canvas, fileName);
+}
+function downloadCanvas(canvas, fileName) {
+	canvas.toBlob(function(blob) {
+		downloadBlob(blob, fileName, "image/png");
+	}, "image/png", 1);
+}
+function downloadBlob(blob, fileName, mimeType) {
+	if(window.navigator && window.navigator.msSaveOrOpenBlob) {
+		window.navigator.msSaveOrOpenBlob(blob, fileName);
+		return;
+	}
+	var URL = null;
+	if(window.URL) {
+		URL = window.URL;
+	} else if(window.webkitURL) {
+		URL = window.webkitURL;
+	} else {
+		alert("파일을 다운로드 할 수 없습니다.");
+		return;
+	}
+	var blobUrl = URL.createObjectURL(blob, {type: mimeType});
+	var a = document.createElement("a");
+	if(fileName && typeof(a.download) != "undefined") {
+		a.href = blobUrl;
+		a.download = fileName;
+		document.body.appendChild(a);
+		a.click();
+		URL.revokeObjectURL(blobUrl);
+	} else {
+		URL.revokeObjectURL(blobUrl);
+		alert("파일을 다운로드 할 수 없습니다.");
+		return;
+	}
+}
+</script>
+</head>
+<body>
+<header>
+	<h1>OCR</h1>
+	<input type="file" id="file" />
+	<div>
+		<select id="preprocessing">
+			<option value="opencv_only_threshold">흑백</option>
+			<option value="opencv_gaussianblur">노이즈-</option>
+			<option value="opencv">반전</option>
+		</select>
+		<select id="lang">
+			<option value="kor">한글</option>
+			<option value="digit">숫자</option>
+<!--
+			<option value="eng+kor">한글+영문</option>
+-->
+			<option value="eng">영문</option>
+		</select>
+		<button onclick="convert();">변환</button>
+		<button onclick="crop();">잘라내기</button>
+	</div>
+</header>
+<div class="container" ondrop="dropHandler(event);" ondragover="dragOverHandler(event);">
+	<div>
+		<img id="image" />
+	</div>
+</div>
+<div id="result">
+	<div>
+		<textarea></textarea>
+		<button onclick="hideResult()">닫기</button>
+	</div>
+</div>
+<footer class="bottom">
+	<progress value="0" min="0" max="100"></progress>
+</footer>
+<div id="warningIE">
+Microsoft 社는 2022년 6월 15일 Internet Explorer 11의 지원을 종료했습니다.
+</div>
+<div id="error">
+원인을 알 수 없는 에러가 발생했습니다.
+</div>
+</body>
+</html>

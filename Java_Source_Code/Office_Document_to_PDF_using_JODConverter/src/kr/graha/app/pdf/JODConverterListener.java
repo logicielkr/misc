@@ -83,25 +83,18 @@ public class JODConverterListener implements ServletContextListener {
 	private Logger logger = Logger.getLogger(this.getClass().getName());
 	private JODConverterManager converter = null;
 	public void contextInitialized(ServletContextEvent sce) {
-		String virtualServerName = sce.getServletContext().getInitParameter("office.virtualservername");
-		if(
-			virtualServerName != null &&
-			!virtualServerName.equals(sce.getServletContext().getVirtualServerName())
-		) {
-			if(logger.isLoggable(Level.FINER)) { logger.finer("contextInitialized(ServletContextEvent sce) skip : office.virtualservername = " + virtualServerName + "but sce.getServletContext().getVirtualServerName() = " + sce.getServletContext().getVirtualServerName()); }
-			return;
+		if(JODConverterListenerServletVersionChecker.check(sce)) {
+			if(JODConverterListenerVirtualServerNameChecker.check(sce, this.logger)) {
+			} else {
+				return;
+			}
 		}
-		String contextPath = sce.getServletContext().getInitParameter("office.contextpath");
-		if(
-			contextPath != null &&
-			!contextPath.equals(sce.getServletContext().getContextPath())
-		) {
-			if(logger.isLoggable(Level.FINER)) { logger.finer("contextInitialized(ServletContextEvent sce) skip : office.contextpath = " + contextPath + "but sce.getServletContext().getContextPath() = " + sce.getServletContext().getContextPath()); }
-			return;
-		}
-		if(logger.isLoggable(Level.FINER)) { logger.finer("contextInitialized(ServletContextEvent sce) with " + sce.getServletContext().getVirtualServerName() + " and " + sce.getServletContext().getContextPath());}
-
 		String officeHome = sce.getServletContext().getInitParameter("office.home");
+		if(officeHome == null) {
+			if(System.getProperty("office.home") != null) {
+				officeHome = System.getProperty("office.home");
+			}
+		}
 		if(officeHome == null) {
 			if(JODConverterManager.searcheOfficeHome != null) {
 				for(int i = 0; i < JODConverterManager.searcheOfficeHome.length; i++) {

@@ -1,0 +1,18 @@
+{
+	"description": "Graha 문서화 도구 (GrahaDocTools.js)는 웹페이지에 원문자가 담겨 있는 박스를 삽입할 수 있는 도구이며, 화면캡처 플로그인과 함께 사용하면, 웹페이지를 설명하는 문서를 만들 때 유용하게 사용할 수 있다.",
+	"manifest_version": 2,
+	"name": "GrahaDocTools",
+	"version": "0.5.0.0",
+	"homepage_url": "https://github.com/logicielkr/client_lib/tree/master/doctools/0.5.0.0",
+//	"icons": {
+//		"48": "icons/GrahaDocTools-48.png"
+//	},
+	
+	"content_scripts": [
+		{
+//			"matches": ["*://*.graha.kr/*"],
+			"matches": ["<all_urls>"],
+			"js": ["jquery-1.12.4.js", "jquery-ui.js", "GrahaDocTools.js", "initForFirefoxExtension.js"]
+		}
+	]
+}

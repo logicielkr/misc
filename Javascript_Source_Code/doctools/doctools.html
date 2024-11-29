@@ -1,0 +1,97 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, width=device-width" />
+<meta charset="utf-8" />
+<title>Graha 문서화 도구 (GrahaDocTools.js)</title>
+<script src="//cdn.jsdelivr.net/npm/@ungap/url-search-params@0.2.2/min.js"></script>
+
+<link href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" rel="stylesheet">
+<script src="//code.jquery.com/jquery-1.12.4.js"></script>
+<script src="//code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script src="GrahaDocTools.js"></script>
+<script>
+function displayImage(src) {
+	var img = null;
+	if($("div#container img") && $("div#container img").length > 0) {
+		img = $("div#container img")[0];
+	}
+	if(img == null) {
+		img = document.createElement("img");
+	}
+	img.src = src;
+	document.getElementById("container").appendChild(img);
+}
+function loadImageFromUrl(path) {
+	var image = new Image();
+	image.addEventListener("load", function(event) {
+		displayImage(this.src);
+	});
+	image.src = path;
+}
+function loadImage(file) {
+	var reader = new FileReader();
+	reader.addEventListener("load", function(event) {
+		if(event.target.result.substring(0, 11) == "data:image/") {
+			displayImage(event.target.result);
+		}
+	});
+	reader.readAsDataURL(file);
+}
+$(document).ready(function() {
+	GrahaDocTools.addMenuForWeb();
+	var params = new URLSearchParams(document.location.search.substring(1));
+	if(params.get("image") != null && params.get("image") != "") {
+		loadImageFromUrl(params.get("image"));
+	}
+});
+function removeDragData(event) {
+	if (event.dataTransfer.items) {
+		event.dataTransfer.items.clear();
+	} else {
+		event.dataTransfer.clearData();
+	}
+}
+function dropHandler(event) {
+	event.preventDefault();
+	var file = null;
+	if (event.dataTransfer.items) {
+		if(event.dataTransfer.items.length > 0) {
+			file = event.dataTransfer.items[0].getAsFile();
+		}
+	} else if(event.dataTransfer.files) {
+		if(event.dataTransfer.files.length > 0) {
+			file = event.dataTransfer.files[0];
+		}
+	}
+	if(file != null) {
+		loadImage(file);
+	}
+	removeDragData(event)
+}
+function dragOverHandler(event) {
+	event.preventDefault();
+}
+</script>
+<style>
+html, body {
+	margin: 0;
+	padding: 0;
+}
+html, body {
+	height: 100%;
+}
+div#container {
+	width: 100%;
+	background-color: #F3F3F3;
+	height: 100%;
+}
+div#container img {
+	max-width: 100%;
+}
+</style>
+</head>
+<body>
+<div id="container" ondrop="dropHandler(event);" ondragover="dragOverHandler(event);"></div>
+</body>
+</html>

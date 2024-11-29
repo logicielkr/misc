@@ -49,3 +49,13 @@ Graha 를 이용해서 만든 간단한 SQLite 관리자 프로그램이다.
 JODConverter 및 [Apache OpenOffice](https://www.openoffice.org/) 혹은 [LibreOffice](https://www.libreoffice.org/) 를 이용해서 Office 문서를 PDF 로 변환하는 실험적인 코드이다.
 
 사용자가 거의 없는 환경에서만 테스트했다.
+
+## 5. Javascript Source Code
+
+### 5.1. 	광학 문자 인식(ocr.html)
+
+Tesseract.js Cropper.js OpenCV.js 등을 이용해서 서버에 파일을 업로드하지 않고 웹브라우저에서 OCR 기능을 구현하는 예제이다.
+
+### 5.2. 	Graha 문서화 도구 (GrahaDocTools.js)
+
+Graha 문서화 도구 (GrahaDocTools.js) 는 웹페이지에 원문자가 담겨 있는 박스를 삽입할 수 있는 도구이다.

@@ -21,7 +21,7 @@
 package kr.graha.app.pdf;
 
 import org.jodconverter.local.office.LocalOfficeManager;
-import org.jodconverter.core.office.OfficeManager;
+//import org.jodconverter.core.office.OfficeManager;
 import org.jodconverter.core.DocumentConverter;
 import org.jodconverter.local.LocalConverter;
 import java.io.File;
@@ -49,6 +49,7 @@ public class JODConverterManager {
 		"/opt/libreoffice",
 		"/opt/openoffice",
 		"/opt/libreoffice7.5",
+		"/opt/libreoffice24.8",
 		"/opt/openoffice4",
 		"/usr/lib/openoffice",
 		"/usr/lib/libreoffice"
@@ -197,18 +198,29 @@ public class JODConverterManager {
 			if(logger.isLoggable(Level.WARNING)) { logger.warning("File not exists : " + path); }
 		}
 	}
+	public static String getPDFOutputFileName(File inputFile) {
+		if(inputFile == null) {
+			return null;
+		}
+		String p = inputFile.getPath();
+		if(p.indexOf(".") > 0) {
+			return p.substring(0, p.lastIndexOf(".")) + ".pdf";
+		} else {
+			return p + ".pdf";
+		}
+	}
+	public static File getPDFOutputFile(File inputFile) {
+		if(inputFile == null) {
+			return null;
+		}
+		return new File(JODConverterManager.getPDFOutputFileName(inputFile));
+	}
 	public void convert(File[] files) throws org.jodconverter.core.office.OfficeException {
 		if(files != null && files.length > 0) {
 			checkInternal();
 			for(int i = 0; i < files.length; i++) {
 				File inputFile = files[i];
-				String p = inputFile.getPath();
-				File outputFile = null;
-				if(p.indexOf(".") > 0) {
-					outputFile = new File(p.substring(0, p.lastIndexOf(".")) + ".pdf");
-				} else {
-					outputFile = new File(p + ".pdf");
-				}
+				File outputFile = JODConverterManager.getPDFOutputFile(inputFile);
 				long before = System.currentTimeMillis();
 				if(logger.isLoggable(Level.FINER)) { logger.finest("before convert " + inputFile.getPath() + " to " + outputFile.getPath()); }
 				this.documentConverter.convert(inputFile).to(outputFile).execute();
@@ -229,7 +241,9 @@ public class JODConverterManager {
 			return;
 		}
 		String officeHome = null;
-		if(JODConverterManager.searcheOfficeHome != null) {
+		if(System.getProperty("office.home") != null) {
+			officeHome = System.getProperty("office.home");
+		} else if(JODConverterManager.searcheOfficeHome != null) {
 			for(int i = 0; i < JODConverterManager.searcheOfficeHome.length; i++) {
 				if((new File(JODConverterManager.searcheOfficeHome[i])).exists()) {
 					officeHome = JODConverterManager.searcheOfficeHome[i];
