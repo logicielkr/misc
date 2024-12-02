@@ -30,9 +30,19 @@ import java.util.logging.Level;
 
 /**
  * JODConverter 관리자
- * java -classpath ./bin/:lib/JODConverter/jodconverter-local-4.4.6.jar:lib/JODConverter/jodconverter-core-4.4.6.jar kr.graha.app.pdf.JODConverterManager
+ *
+ * java -classpath \
+ * JODConverterWrapper.0.5.0.0.jar:lib/graha.0.5.1.329.jar:lib/jodconverter-local-4.4.6.jar:lib/jodconverter-core-4.4.6.jar:lib/gson-2.10.1.jar:lib/slf4j-api-2.0.7.jar:lib/unoil.jar:lib/juh.jar \
+ * kr.graha.app.pdf.JODConverterManager \
+ * ${Office Document 파일이름}
  * 
- * 
+ * 자세한 사용법은 다음 중 1개를 참조한다.
+ *
+ * - README.md
+ * - https://github.com/logicielkr/misc/tree/master/Java_Source_Code/Office_Document_to_PDF_using_JODConverter
+ * - https://logiciel.kr/graha/article/detail.html?contents_id=3093&article_id=3184
+ *
+ *
  * @author HeonJik, KIM
  * @version 0.1
  * @since 0.1
@@ -234,10 +244,16 @@ public class JODConverterManager {
 			System.err.println("{Calc|Excel File Path} is not exists!!!");
 			System.err.println();
 			System.err.println("Usage :");
-			System.err.println("java \\");
-			System.err.println("-classpath ./bin/:lib/JODConverter/jodconverter-local-4.4.6.jar:lib/JODConverter/jodconverter-core-4.4.6.jar \\");
+			System.err.println("java -classpath \\");
+			System.err.println("JODConverterWrapper.0.5.0.0.jar:lib/graha.0.5.1.329.jar:lib/jodconverter-local-4.4.6.jar:lib/jodconverter-core-4.4.6.jar:lib/gson-2.10.1.jar:lib/slf4j-api-2.0.7.jar:lib/unoil.jar:lib/juh.jar \\");
 			System.err.println("kr.graha.app.pdf.JODConverterManager \\");
-			System.err.println("{Calc|Excel File Path}");
+			System.err.println("${Office Document 파일이름}");
+			System.err.println();
+			System.err.println("자세한 사용법은 다음 중 1개를 참조한다.");
+			System.err.println("");
+			System.err.println("- README.md");
+			System.err.println("- https://github.com/logicielkr/misc/tree/master/Java_Source_Code/Office_Document_to_PDF_using_JODConverter");
+			System.err.println("- https://logiciel.kr/graha/article/detail.html?contents_id=3093&article_id=3184");
 			return;
 		}
 		String officeHome = null;
