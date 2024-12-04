@@ -180,7 +180,15 @@ soffice 명령어에
 "--convert-to" 대신
 JODConverter 3.0-beta-4 다운로드 받아서 사용해야 하는 것으로 보인다.
 
-> 이 프로그램을 사용한다면 명령행에서 odt 파일 따위를 pdf 파일로 변환한 수 있다. 
+> 이 프로그램을 사용한다면 명령행에서 odt 파일 따위를 pdf 파일로 변환한 수 있다.
+
+<!--
+LibreOffice 는 다음과 같이 docx 등을 pdf 로 변환할 수 있다(hwp, hwpx 는 확장기능 같은 걸 설치하지 않는 한 안된다).
+
+```bash
+$ /opt/libreoffice24.8/program/soffice --headless --convert-to pdf:writer_pdf_Export sample.docx
+```
+-->
 
 ### 2.2. JODConverter 다운로드 및 설치
 
@@ -351,8 +359,10 @@ try {
 }
 ```
 
+변환되는 파일이름은 변환 할 파일이름에서 (마지막 . 뒤의) 확장자를 떼어내고, pdf 를 붙인 형태이다.
+
 ```JODConverterManager.getInstance().convert()``` 메소드에 전달하는 파라미터는
-File 이나 String 일 수도 있고,
+File 이나 String 혹은 java.nio.file.Path 일 수도 있고,
 파일이나 디렉토리일 수도 있다.
 
 만약 디렉토리가 파라미터로 넘어온다면, 그 디렉토리에 있는 모든 파일들에 대해 변환을 시도한다.
@@ -361,7 +371,19 @@ File 이나 String 일 수도 있고,
 그 디렉토리 아래의 모든 파일들에 대해 변환을 시도하기 때문에
 그 디렉토리에는 변환할 파일만 있어야 한다.
 
-> OpenOffice 혹은 LibreOffice 를 이용해서 PDF 로 변환할 수 있는 파일이 가질 수 있는 확장자가 생각 외로 많아서 프로그램에서 이를 check 하지 않는다.
+> OpenOffice 혹은 LibreOffice 를 이용해서
+> PDF 로 변환할 수 있는 파일이 가질 수 있는 확장자가 생각 외로 많아서
+> (org.jodconverter.document.DefaultDocumentFormatRegistry 참조)
+> 프로그램에서 이를 check 하지 않는다.
+
+기본 값은 하위 디렉토리로 내려가지 않지만,
+파라미터로 DirectoryStream 을 넘긴다면,
+2 번째 파라미터(recursive) 를 true 로 넘겨서 재귀적으로 변환을 시도하도록 할 수도 있다.
+
+InputStream 과 OutputStream 을 파라미터로 넘길 수도 있고,
+이 경우 3 번째 파라미터(closeStream) 을 boolean 값으로 넘길 수 있다.
+
+> 변환되는 파일의 java.nio.file.Path  는 ```JODConverterManager.getPDFOutputFilePath(Path in)``` 로 얻을 수 있다.
 
 ### 2.5. 문제해결
 

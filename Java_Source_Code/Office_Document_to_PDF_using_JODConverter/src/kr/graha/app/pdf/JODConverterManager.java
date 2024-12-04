@@ -27,6 +27,16 @@ import org.jodconverter.local.LocalConverter;
 import java.io.File;
 import java.util.logging.Logger;
 import java.util.logging.Level;
+import java.io.InputStream;
+import java.io.OutputStream;
+import org.jodconverter.core.document.DefaultDocumentFormatRegistry;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.Files;
+import java.nio.file.DirectoryStream;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 /**
  * JODConverter 관리자
@@ -208,22 +218,37 @@ public class JODConverterManager {
 			if(logger.isLoggable(Level.WARNING)) { logger.warning("File not exists : " + path); }
 		}
 	}
+	public static String getPDFOutputFileName(String inputFileName) {
+		if(inputFileName == null) {
+			return null;
+		}
+		if(inputFileName.indexOf(".") > 0) {
+			return inputFileName.substring(0, inputFileName.lastIndexOf(".")) + ".pdf";
+		} else {
+			return inputFileName + ".pdf";
+		}
+	}
 	public static String getPDFOutputFileName(File inputFile) {
 		if(inputFile == null) {
 			return null;
 		}
-		String p = inputFile.getPath();
-		if(p.indexOf(".") > 0) {
-			return p.substring(0, p.lastIndexOf(".")) + ".pdf";
-		} else {
-			return p + ".pdf";
-		}
+		return JODConverterManager.getPDFOutputFileName(inputFile.getPath());
 	}
 	public static File getPDFOutputFile(File inputFile) {
 		if(inputFile == null) {
 			return null;
 		}
 		return new File(JODConverterManager.getPDFOutputFileName(inputFile));
+	}
+	public static Path getPDFOutputFilePath(Path inputPath) throws URISyntaxException {
+		if(inputPath == null) {
+			return null;
+		}
+		try {
+			return Paths.get(new URI(JODConverterManager.getPDFOutputFileName(inputPath.toUri().toString())));
+		} catch (URISyntaxException e) {
+			throw e;
+		}
 	}
 	public void convert(File[] files) throws org.jodconverter.core.office.OfficeException {
 		if(files != null && files.length > 0) {
@@ -237,6 +262,71 @@ public class JODConverterManager {
 				long after = System.currentTimeMillis();
 				if(logger.isLoggable(Level.FINER)) { logger.finest(Long.toString(after - before) + "ms : " + "after convert " + inputFile.getPath() + " to " + outputFile.getPath()); }
 			}
+		}
+	}
+	public void convert(InputStream is, OutputStream os) throws org.jodconverter.core.office.OfficeException {
+		this.convert(is, os, false);
+	}
+	public void convert(InputStream is, OutputStream os, boolean closeStream) throws org.jodconverter.core.office.OfficeException {
+		if(is != null && os != null) {
+			checkInternal();
+			long before = System.currentTimeMillis();
+			if(logger.isLoggable(Level.FINER)) { logger.finest("before convert using InputStream"); }
+			this.documentConverter.convert(is, closeStream).to(os, closeStream).as(DefaultDocumentFormatRegistry.getFormatByExtension("pdf")).execute();
+			long after = System.currentTimeMillis();
+			if(logger.isLoggable(Level.FINER)) { logger.finest(Long.toString(after - before) + "ms : " + "after convert using InputStream"); }
+		}
+	}
+	public void convert(DirectoryStream<Path> stream)
+		throws org.jodconverter.core.office.OfficeException, IOException, URISyntaxException
+	{
+		this.convert(stream, false);
+	}
+	public void convert(DirectoryStream<Path> stream, boolean recursive)
+		throws org.jodconverter.core.office.OfficeException, IOException, URISyntaxException
+	{
+		for(Path path : stream) {
+			if(Files.isDirectory(path)) {
+				if(recursive) {
+					this.convert(path);
+				}
+			} else {
+				this.convert(path);
+			}
+		}
+	}
+	public void convert(Path in, Path out)
+		throws org.jodconverter.core.office.OfficeException, IOException
+	{
+		if(!Files.isDirectory(in) && !Files.isDirectory(out)) {
+			this.convert(
+				Files.newInputStream(in),
+				Files.newOutputStream(out),
+				true
+			);
+		}
+	}
+	public void convert(Path in)
+		throws org.jodconverter.core.office.OfficeException, IOException, URISyntaxException
+	{
+		if(Files.isDirectory(in)) {
+			DirectoryStream<Path> stream = null;
+			try {
+				this.convert(stream);
+			} catch(IOException e) {
+				throw e;
+			} finally {
+				if(stream != null) {
+					try {
+						stream.close();
+						stream = null;
+					} catch(IOException e) {
+					}
+				}
+			}
+		} else {
+			Path out = JODConverterManager.getPDFOutputFilePath(in);
+			this.convert(in, out);
 		}
 	}
 	public static void main(String[] args) throws Exception {
