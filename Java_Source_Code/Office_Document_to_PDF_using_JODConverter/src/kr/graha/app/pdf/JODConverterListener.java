@@ -53,7 +53,7 @@ import java.util.ArrayList;
  * </context-param>
  * <context-param>
  * 	<param-name>office.contextpath</param-name>
- * 	<param-value>/</param-value>
+ * 	<param-value></param-value>
  * </context-param>
  * <listener>
  * <listener-class>kr.graha.app.pdf.JODConverterListener</listener-class>
@@ -124,9 +124,11 @@ public class JODConverterListener implements ServletContextListener {
 			if(logger.isLoggable(Level.SEVERE)) { logger.severe("/usr/lib/libreoffice"); }
 			return;
 		}
+/*
 		int[] portNumbers = null;
 		String ports = sce.getServletContext().getInitParameter("office.port");
 		if(ports != null) {
+
 			List list = new ArrayList();
 			StringTokenizer st = new StringTokenizer(ports, ", ");
 			while(st.hasMoreTokens()) {
@@ -138,6 +140,7 @@ public class JODConverterListener implements ServletContextListener {
 				portNumbers[i] = ((Integer)list.get(i)).intValue();
 			}
 		}
+*/
 		long taskExecutionTimeout = 0;
 		String timeout = sce.getServletContext().getInitParameter("office.timeout");
 		if(timeout != null) {
@@ -145,11 +148,16 @@ public class JODConverterListener implements ServletContextListener {
 		}
 		int maxTasksPerProcess = 0;
 		String tasks = sce.getServletContext().getInitParameter("office.maxtasksperprocess");
-		if(timeout != null) {
+		if(tasks != null) {
 			maxTasksPerProcess = Integer.valueOf(tasks);
 		}
+		int[] portNumbers = null;
 		try {
 			this.converter = JODConverterManager.getInstance();
+			String ports = sce.getServletContext().getInitParameter("office.port");
+			if(ports != null) {
+				portNumbers = this.converter.portNumbers(ports);
+			}
 			this.converter.init(
 				officeHome,
 				taskExecutionTimeout,

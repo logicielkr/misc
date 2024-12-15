@@ -37,6 +37,9 @@ import java.nio.file.DirectoryStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.StringTokenizer;
 
 /**
  * JODConverter 관리자
@@ -138,7 +141,7 @@ public class JODConverterManager {
 			portNumbers
 		);
 	}
-	protected void init(
+	public void init(
 		String officeHome
 	) throws org.jodconverter.core.office.OfficeException {
 		this.initInternal(
@@ -159,7 +162,7 @@ public class JODConverterManager {
 			portNumbers
 		);
 	}
-	protected void init() throws org.jodconverter.core.office.OfficeException {
+	public void init() throws org.jodconverter.core.office.OfficeException {
 		this.initInternal(
 			null,
 			0,
@@ -192,7 +195,7 @@ public class JODConverterManager {
 		this.localOfficeManager = null;
 		this.builder = null;
 	}
-	protected void destory() throws org.jodconverter.core.office.OfficeException {
+	public void destory() throws org.jodconverter.core.office.OfficeException {
 		this.destoryInternal();
 	}
 	public void convert(File file) throws org.jodconverter.core.office.OfficeException {
@@ -329,6 +332,22 @@ public class JODConverterManager {
 			this.convert(in, out);
 		}
 	}
+	protected int[] portNumbers(String ports) {
+		if(ports != null) {
+			List list = new ArrayList();
+			StringTokenizer st = new StringTokenizer(ports, ", ");
+			while(st.hasMoreTokens()) {
+				String s = st.nextToken();
+				list.add(Integer.valueOf(s));
+			}
+			int[] portNumbers = new int[list.size()];
+			for(int i = 0 ; i < list.size(); i++)  {
+				portNumbers[i] = ((Integer)list.get(i)).intValue();
+			}
+			return portNumbers;
+		}
+		return null;
+	}
 	public static void main(String[] args) throws Exception {
 		if(args == null || args.length == 0) {
 			System.err.println("{Calc|Excel File Path} is not exists!!!");
@@ -370,7 +389,24 @@ public class JODConverterManager {
 		}
 		System.out.println("convert " + args[0] + " using " + officeHome);
 		JODConverterManager converter = JODConverterManager.getInstance();
-		converter.init(	officeHome);
+		int[] portNumbers = null;
+		if(System.getProperty("office.port") != null) {
+			portNumbers = converter.portNumbers(System.getProperty("office.port"));
+		}
+		long taskExecutionTimeout = 0;
+		if(System.getProperty("office.timeout") != null) {
+			taskExecutionTimeout = Long.valueOf(System.getProperty("office.timeout"));
+		}
+		int maxTasksPerProcess = 0;
+		if(System.getProperty("office.maxtasksperprocess") != null) {
+			maxTasksPerProcess = Integer.valueOf(System.getProperty("office.maxtasksperprocess"));
+		}
+		converter.init(
+			officeHome,
+			taskExecutionTimeout,
+			maxTasksPerProcess,
+			portNumbers
+		);
 		converter.convert(args[0]);
 		converter.destory();
 	}

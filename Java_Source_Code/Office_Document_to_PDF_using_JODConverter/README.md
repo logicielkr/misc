@@ -21,7 +21,9 @@ https://github.com/logicielkr/misc/tree/master/Java_Source_Code/Office_Document_
 - JODConverter 4.4.6 with Java 8 and LibreOffice 7.5.4 on Ubuntu 20
 - Apache Tomcat 7.x 이상 (8.x 이상을 권장)
 
+<!--
 ### 1.4. 의존성
+-->
 
 ## 2. 사용법
 
@@ -31,7 +33,7 @@ OpenOffice 4.1.15 over 혹은 LibreOffice 7.5.4 over 를 설치한다.
 
 > 파일은 ```/opt/openoffice4``` 혹은 ```/opt/libreoffice24.8``` 같은 곳에 설치되는데, 이미 설치된 파일을 복사해도 특별한 문제가 발생하지 않는다.
 
-#### 2.1.1.	OpenOffice 4.1.14 설치
+#### 2.1.1.	OpenOffice 4.1.15 설치
 
 RPM 설치방법은 다음과 같다(CentOS 5.8 에서 실행).
 
@@ -49,7 +51,8 @@ cd ko/DEBS
 sudo dpkg -i *.deb
 ```
 
-```/opt/openoffice4/program/soffice``` 명령을 실행할 때, 다음과 같은 에러가 발생할 수 있지만 이는  무시하는 것으로 한다.
+```/opt/openoffice4/program/soffice``` 명령을 실행할 때, 다음과 같은 에러가 발생할 수 있는데,
+아래의 의존성 있는 패키지 (```libxt6```, ```libxrender1```) 를 설치하면 문제가 해결된다.
 
 ```
 no suitable windowing system found, exiting.
@@ -94,11 +97,31 @@ sudo apt-get autoremove
 ```
 -->
 
-#### 2.1.3.	한글 폰트 설치
+#### 2.1.3.	의존성 있는 패키지 설치
+
+다음과 같은 패키지도 설치한다.
+
+```bash
+sudo apt-get install libxt6
+sudo apt-get install libxrender1
+sudo apt-get install libx11-xcb1
+```
+
+```libxt6``` 및 ```libxrender1``` 는 OpenOffice 에서만 필요한 것으로 생각된다.
+
+#### 2.1.4.	한글 폰트 설치
 
 > Ubuntu 19 혹은 20을 기준으로 설명한다.
 
-##### 2.1.3.1.	패키지로 설치하는 방법
+폰트는 PDF 파일에 "포함 서브세트" (embed subset) 로 포함되므로,
+PDF 를 배포할 요량이라면, 저작권에 문제가 생기지 않도록 공개된 폰트를 사용할 것을 권한다.
+
+
+##### 2.1.4.1.	locale 을 한국어로 변경
+
+[locale 설정](//logiciel.kr/graha/article/detail.html?contents_id=3060&article_id=3063) 을 참조한다.
+
+##### 2.1.4.2.	패키지로 설치하는 방법
 
 다음과 같이 설치할 수 있는 한글 폰트를 확인한다.
 
@@ -122,7 +145,7 @@ Ubuntu 19 혹은 20 이라면, 대략 다음과 같은 3개의 폰트가 검색�
 $ apt-get install fonts-nanum fonts-nanum-extra
 ```
 
-##### 2.1.3.2.	폰트 파일을 다운로드 받아 설치하는 방법
+##### 2.1.4.3.	폰트 파일을 다운로드 받아 설치하는 방법
 
 먼저, 폰트 파일이 위치할 수 있는 디렉토리를 확인한다.
 
@@ -149,15 +172,23 @@ dir 로 검색해서 찾으면 되고, Ubuntu 20 를 기준으로 하면 대략 
 /opt/libreoffice24.8/share/fonts/truetype
 -->
 
-fontconfig 가 설치되어 있다면 다음과 같이 설치된 한글 폰트를 확인할 수 있다.
+##### 2.1.4.4.	설치(혹은 복사)한 폰트를 시스템에 적용
 
+fontconfig 가 설치되어 있다면
+다음과 같이 설치(혹은 복사)한 폰트를 시스템 전체에 적용시키킨다.
+
+```bash
+$ sudo fc-cache -f -v
 ```
-$ fc-cache -f -v
 
+fontconfig 패키지의 다른 명령 중에는 
+다음과 같이 설치된 한글 폰트를 확인할 수 있는 것도 있다.
+
+```bash
 $ fc-list :lang=ko
 ```
 
-#### 2.1.4.	OpenOffice vs LibreOffice
+#### 2.1.5.	OpenOffice vs LibreOffice
 
 LibreOffice 의 장점은 모두가 잘 알고 있는 바와 같고,
 OpenOffice 의 장점은 다음과 같다.
@@ -214,6 +245,8 @@ Apache License, Version 2.0 조건하에서 배포된다.
 - slf4j-api-1.7.36.jar 이상 (현재 slf4j-api-2.0.7.jar) : [maven 저장소](https://search.maven.org/artifact/org.slf4j/slf4j-api/2.0.7/jar)
 - unoil.jar : [maven 저장소](https://search.maven.org/artifact/org.openoffice/unoil/4.1.2/jar) 혹은 ${(OpenOffice | LibreOffice) HOME}/program/classes
 - juh.jar : [maven 저장소](https://search.maven.org/artifact/org.openoffice/juh/4.1.2/jar) 혹은 ${(OpenOffice | LibreOffice) HOME}/program/classes
+- ridl.jar : ${(OpenOffice | LibreOffice) HOME}/program/classes
+- jurt.jar : ${(OpenOffice | LibreOffice) HOME}/program/classes
 
 unoil.jar 와 juh.jar 파일은 OpenOffice 혹은 LibreOffice 와 함께 설치되므로, 파일을 복사하거나 classpath 를 추가할 수도 있다.
 
@@ -235,21 +268,30 @@ https://code.google.com/archive/p/jodconverter/downloads
 - slf4j-api-1.7.36.jar 이상
 - unoil.jar
 - juh.jar
+- ridl.jar
+- jurt.jar
 
 #### 2.3.2. 실행
 
 ```bash
 java -classpath \
-JODConverterWrapper.0.5.0.0.jar:lib/jodconverter-local-4.4.6.jar:lib/jodconverter-core-4.4.6.jar:lib/gson-2.10.1.jar:lib/slf4j-api-2.0.7.jar:lib/unoil.jar:lib/juh.jar \
+JODConverterWrapper.0.5.0.0.jar:lib/jodconverter-local-4.4.6.jar:lib/jodconverter-core-4.4.6.jar:lib/gson-2.10.1.jar:lib/slf4j-api-2.0.7.jar:lib/unoil.jar:lib/juh.jar:lib/ridl.jar:lib/jurt.jar \
 kr.graha.app.pdf.JODConverterManager \
 ${Office Document 파일이름}
 ```
+
+처음 실행은 대단히 느리지만, 그 다음 실행부터는 견딜만 하고, Web 프로그램에서는 원본 파일의 크기가 비교적 작다면 쓸만은 하다. 
+
+> JODConverter OpenOffice 혹은 LibreOffice 프로세스를 실행시키고 나서,
+> 그 프로세스와 udp(local 아 아니라면 tcp) 통신을 통해서
+> 원본 파일을 그 프로세스에 넘긴 다음 PDF 파일을 다시 돌려받는 방식인데,
+> 처음 실행이 대단히 느린 이유는 .so 파일을 메모리에 올리는 비용이 크기 때문이다. 
 
 만약 OpenOffice 혹은 LibreOffice 가 다음과 같은 경로에 설치되어 있지 않은 경우
 ```-Doffice.home=/opt/openoffice4``` 와 같은 환경변수를 추가해서
 OpenOffice 혹은 LibreOffice 가 설치된 경로를 지정한다.
 
-> 우선순위는 ```-Doffice.home=```, 다음의 경로이다. 
+> 우선순위는 ```-Doffice.home=```, 그리고 다음 경로의 순서이다. 
 
 - /opt/libreoffice
 - /opt/openoffice
@@ -272,13 +314,15 @@ OpenOffice 혹은 LibreOffice 가 설치된 경로를 지정한다.
 
 ### 2.4. Apache Tomcat 에서 사용
 
+> 1개의 Context 에서만 사용할 수 있다.
+
 #### 2.4.1. WEB-INF/lib 디렉토리에 넣을 jar 파일들
 
 다음 파일을 WEB-INF/lib 디렉토리에 복사하거나 심볼릭 링크 (Symbolic link) 로 걸면 된다.
 
 - JODConverterWrapper.0.5.0.0.jar
 
-다음과 같이 의존성 있는 jar 파일들도 WEB-INF/lib 디렉토리에 복사하거나 심볼릭 링크 (Symbolic link) 로 걸어준다.
+다음과 같이 의존성 있는 jar 파일들도 WEB-INF/lib 디렉토리에 복사한다.
 
 - jodconverter-core-4.4.6.jar
 - jodconverter-local-4.4.6.jar
@@ -286,6 +330,10 @@ OpenOffice 혹은 LibreOffice 가 설치된 경로를 지정한다.
 - slf4j-api-1.7.36.jar 이상
 - unoil.jar
 - juh.jar
+- ridl.jar
+- jurt.jar
+
+> 심볼릭 링크 (Symbolic link) 로 걸수도 있겠지만, 권한이 없다면, 예외가 발생한다.
 
 #### 2.4.2. web.xml 설정
 
@@ -311,7 +359,7 @@ OpenOffice 혹은 LibreOffice 가 다음과 같은 경로에 설치되어 있는
 office.home 파라미터는 생략할 수 있고,
 Apache Tomcat 을 실행시킬 때 ```-Doffice.home=/opt/openoffice4``` 와 같은 환경변수를 추가해도 된다.
 
-> 우선순위는 context-param, ```-Doffice.home=```, 다음의 경로이다. 
+> 우선순위는 context-param, ```-Doffice.home=```, 그리고 다음 경로의 순서이다. 
 
 - /opt/libreoffice
 - /opt/openoffice
@@ -321,9 +369,10 @@ Apache Tomcat 을 실행시킬 때 ```-Doffice.home=/opt/openoffice4``` 와 같�
 - /usr/lib/openoffice
 - /usr/lib/libreoffice
 
-만약, 같은 경로를 참조하는 ```<Host>``` 설정이 여러 개인 경우 등
 kr.graha.app.pdf.JODConverterListener 가 여러 번 실행될 가능성이 있다면
 다음과 같은 내용도 추가한다.
+
+> 같은 경로를 참조하는 ```<Host>``` 설정이 여러 개인 경우 등이다.
 
 ```xml
 <context-param>
@@ -332,7 +381,7 @@ kr.graha.app.pdf.JODConverterListener 가 여러 번 실행될 가능성이 있�
 </context-param>
 <context-param>
 	<param-name>office.contextpath</param-name>
-	<param-value>/</param-value>
+	<param-value></param-value>
 </context-param>
 ```
 
@@ -340,9 +389,24 @@ kr.graha.app.pdf.JODConverterListener 가 여러 번 실행될 가능성이 있�
 > 지원하지 않는 Apache Tomcat 7.x 미만이라면,
 > ```kr/graha/app/pdf/JODConverterListener.java``` 소스코드를 수정해야 하고,
 > 설정 할 때 단 1번만 실행되도록 주의해야 하는데,
-> 동일한 web.xml 을 바라보는 여러 개의 ```<Host>``` 설정이 있으면 안된다.
+> 동일한 web.xml 을 바라보는 여러 개의 ```<Host>``` 설정이 있으면 안되고,
+> 부득이한 경우라면, ```javax.servlet.ServletContextListener``` 를 이용한 자동화를 포기할 수 밖에 없다.
 
-#### 2.4.3. 응용프로그램에서 호출
+#### 2.4.3. 확인
+
+설정이 성공적이라면,
+Apache Tomcat 을 기동시킨 후에,
+soffice.bin 프로세스가 있어야 한다.
+
+```bash
+ps -ef | grep soffice
+```
+
+soffice.bin 프로세스가 없다면, 설정에 문제가 생긴 것이다.
+
+이 경우 명령행에서 ```-Doffice.home=``` 을 office.home 과 일치시켜서 실행시키는 방법으로 문제를 해결한다. 
+
+#### 2.4.4. 응용프로그램에서 호출
 
 응용프로그램에서 다음과 같이 호출한다.
 
@@ -496,8 +560,7 @@ OfficeManager.stop() 이 경합하지 않도록 소스코드를 변경한다.
 no suitable windowing system found, exiting.
 ```
 
-다음의 패키지를 설치하면 에러가 발생하지 않겠지만,
-```/opt/openoffice4/program/soffice``` 명령을 실행할 일이 없으므로 에러를 무시하기로 한다.
+다음의 패키지를 설치한다.
 
 ```bash
 sudo apt-get install libxt6
@@ -564,7 +627,50 @@ Servlet 3.0 = Apache Tomcat 7.x 인 경우,
 
 #### 2.5.9.	한글이 모두 깨지는 경우
 
-위에서 설명한 바와 같이 한글 폰트 파일을 설치한다.
+위에서 설명한 바와 같이 locale 을 한국어로 변경하고, 한글 폰트 파일을 설치한다.
+
+#### 2.5.10.	java.lang.IllegalStateException
+
+```
+java.lang.IllegalStateException: Error starting child
+Caused by: org.apache.catalina.LifecycleException: Failed to start component [StandardEngine[Catalina].StandardHost[localhost].StandardContext[]]
+Caused by: java.lang.NullPointerException
+```
+
+java.lang.IllegalStateException 의 모든 원인에 대해 논할 수는 없지만,
+Apache Tomcat 프로세스가 WEB-INF/lib 디렉토리에 있는 jar 파일에 권한이 없는 경우에도 발생한다.
+
+WAS에 다른 변경사항이 없었다면,
+WEB-INF/lib 디렉토리에 있는 파일들과 심볼릭 링크 (Symbolic link) 들의 권한을 확인한다.
+
+#### 2.5.11.	```libX11-xcb.so.1``` 이 없다는 에러
+
+```
+/opt/libreoffice24.8/program/soffice.bin: error while loading shared libraries: libX11-xcb.so.1: cannot open shared object file: No such file or directory
+```
+
+다음과 같은 패키지를 설치한다.
+
+```bash
+sudo apt-get install libx11-xcb1
+```
+
+#### 2.5.12.	```com/sun/star/lang/IllegalArgumentException```
+
+```
+java.lang.NoClassDefFoundError: com/sun/star/lang/IllegalArgumentException
+```
+
+ridl.jar 파일이 classpath 에서 누락되었다.
+
+#### 2.5.12.	```com/sun/star/comp/loader/JavaLoader```
+
+```
+Exception in thread "jodconverter-offprocmng-0" java.lang.NoClassDefFoundError: com/sun/star/comp/loader/JavaLoader
+```
+
+jurt.jar 파일이 classpath 에서 누락되었다.
+
 
 ## 3. 컴파일 가이드 (Compile Guide)
 
